@@ -1,7 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Sky, Stars, Cloud, Html } from '@react-three/drei';
 import { Suspense, useState, useCallback, useRef } from 'react';
-import * as THREE from 'three';
 import type { GameState, Landmark } from '../utils/gameState';
 import { createInitialGameState, getCurrentLandmark, advanceToNextLandmark, startGame, LANDMARKS, LANDMARK_NAMES } from '../utils/gameState';
 import type { TriviaQuestion } from '../utils/triviaQuestions';
@@ -101,85 +100,33 @@ const easeInOutCubic = (t: number): number => {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 };
 
-// Camera controller that follows the player along the terrain
+// Super simple camera - ONLY follows player position, nothing else
 const CameraController = ({ 
-    currentLandmark,
-    transitionProgressRef,
-    previousLandmark,
-    isFlying,
+    characterPosRef,
     isCharacterCreation
 }: { 
-    currentLandmark: Landmark;
-    transitionProgressRef: React.MutableRefObject<number>;
-    previousLandmark: Landmark;
-    isFlying: boolean;
+    characterPosRef: React.MutableRefObject<[number, number, number]>;
     isCharacterCreation: boolean;
 }) => {
     const { camera } = useThree();
-    const targetRef = useRef(new THREE.Vector3(0, 30, 0));
     
     useFrame(() => {
-        if (isCharacterCreation) {
-            // Character creation camera - front facing with slight left offset
-            camera.position.lerp(new THREE.Vector3(-5, 12, 35), 0.08);
-            targetRef.current.lerp(new THREE.Vector3(0, 8, 0), 0.08);
-        } else {
-            const currentPos = LANDMARK_POSITIONS[currentLandmark];
-            const prevPos = LANDMARK_POSITIONS[previousLandmark];
-            const isGoingToSpace = isSpaceLandmark(currentLandmark) && !isSpaceLandmark(previousLandmark);
-            const inSpace = isSpaceLandmark(currentLandmark);
-            const transitionProgress = transitionProgressRef.current;
-            
-            let targetCamPos: THREE.Vector3;
-            let targetLookAt: THREE.Vector3;
-            
-            if (isFlying && transitionProgress > 0) {
-                const progress = easeInOutCubic(transitionProgress);
-                
-                // Interpolate between previous and current positions
-                const interpX = prevPos[0] + (currentPos[0] - prevPos[0]) * progress;
-                const interpY = prevPos[1] + (currentPos[1] - prevPos[1]) * progress;
-                
-                if (isGoingToSpace) {
-                    // Rising up to space - camera lifts dramatically
-                    const riseProgress = Math.min(1, progress * 1.5);
-                    targetCamPos = new THREE.Vector3(
-                        interpX,
-                        20 + riseProgress * 180,
-                        120 - riseProgress * 40
-                    );
-                    targetLookAt = new THREE.Vector3(interpX, interpY + 20, 0);
-                } else if (inSpace) {
-                    // Moving between space landmarks
-                    targetCamPos = new THREE.Vector3(interpX, interpY + 50, 100);
-                    targetLookAt = new THREE.Vector3(interpX, interpY, 0);
-                } else {
-                    // Moving along the terrain - camera follows smoothly from front
-                    targetCamPos = new THREE.Vector3(interpX, 50, 120);
-                    targetLookAt = new THREE.Vector3(interpX, 30, 0);
-                }
-                
-                // Faster lerp for smoother tracking during flight
-                camera.position.lerp(targetCamPos, 0.12);
-                targetRef.current.lerp(targetLookAt, 0.12);
-            } else {
-                // Stationary at current landmark - front-facing camera
-                if (inSpace) {
-                    targetCamPos = new THREE.Vector3(currentPos[0], currentPos[1] + 50, 100);
-                    targetLookAt = new THREE.Vector3(currentPos[0], currentPos[1], 0);
-                } else {
-                    // Camera positioned in front of landmark (positive Z), looking at landmark
-                    targetCamPos = new THREE.Vector3(currentPos[0], 50, 120);
-                    targetLookAt = new THREE.Vector3(currentPos[0], 30, 0);
-                }
-                
-                // Faster lerp for quicker camera settling
-                camera.position.lerp(targetCamPos, 0.1);
-                targetRef.current.lerp(targetLookAt, 0.1);
-            }
-        }
+        // Get player position
+        const [px, py, pz] = characterPosRef.current;
         
-        camera.lookAt(targetRef.current);
+        if (isCharacterCreation) {
+            // Fixed camera for character creation
+            camera.position.set(-5, 12, 35);
+            camera.lookAt(0, 8, 0);
+        } else {
+            // Camera position = player position + offset
+            // Offset: slightly to the right (+15), above (+35), behind (+80)
+            camera.position.set(px + 15, py + 35, pz + 80);
+            
+            // Look at a point slightly below and to the left of player
+            // This puts the player in the upper-left area of the screen
+            camera.lookAt(px + 10, py - 5, pz);
+        }
     });
     
     return null;
@@ -354,10 +301,7 @@ const SceneContent = ({
             
             {/* Camera Controller */}
             <CameraController 
-                currentLandmark={currentLandmark}
-                transitionProgressRef={transitionProgressRef}
-                previousLandmark={previousLandmark}
-                isFlying={isFlying}
+                characterPosRef={characterPosRef}
                 isCharacterCreation={gameState.phase === 'character-creation'}
             />
             
