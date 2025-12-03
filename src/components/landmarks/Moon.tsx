@@ -17,15 +17,20 @@ const Voxel = ({ position, color }: { position: [number, number, number]; color:
 
 export const Moon = ({ position }: MoonProps) => {
     const earthRef = useRef<THREE.Mesh>(null);
+    const moonRef = useRef<THREE.Group>(null);
     
     // Slow Earth rotation
     useFrame((state) => {
         if (earthRef.current) {
             earthRef.current.rotation.y = state.clock.elapsedTime * 0.05;
         }
+        // Very slow moon rotation
+        if (moonRef.current) {
+            moonRef.current.rotation.y = state.clock.elapsedTime * 0.01;
+        }
     });
     
-    const voxels = useMemo(() => {
+    const moonVoxels = useMemo(() => {
         const result: { pos: [number, number, number]; color: string }[] = [];
         
         const moonGrey = COLORS.moonGrey;
@@ -33,91 +38,70 @@ export const Moon = ({ position }: MoonProps) => {
         const moonCrater = COLORS.moonCrater;
         const moonLight = '#d0d0d0';
         
-        // ============ MOON SURFACE ============
-        // Create a curved surface using voxels
-        const surfaceRadius = 50;
-        const surfaceDepth = 8;
+        // ============ SPHERICAL MOON ============
+        const radius = 25;
         
-        for (let x = -25; x <= 25; x++) {
-            for (let z = -25; z <= 25; z++) {
-                // Calculate height based on distance from center (curved surface)
-                const dist = Math.sqrt(x * x + z * z);
-                if (dist <= 25) {
-                    const baseHeight = Math.floor(Math.sqrt(surfaceRadius * surfaceRadius - dist * dist) - surfaceRadius + surfaceDepth);
+        // Create a voxel sphere
+        for (let x = -radius; x <= radius; x++) {
+            for (let y = -radius; y <= radius; y++) {
+                for (let z = -radius; z <= radius; z++) {
+                    const dist = Math.sqrt(x * x + y * y + z * z);
                     
-                    // Add some terrain variation
-                    const noise = Math.sin(x * 0.3) * Math.cos(z * 0.3) * 2;
-                    const height = Math.max(0, baseHeight + Math.floor(noise));
-                    
-                    for (let y = 0; y <= height; y++) {
-                        // Vary colors for texture
-                        let color = moonGrey;
-                        if (y === height) {
-                            // Surface variation
-                            const surfaceNoise = (x + z) % 3;
-                            color = surfaceNoise === 0 ? moonLight : (surfaceNoise === 1 ? moonGrey : moonDark);
-                        } else {
+                    // Only place voxels on the surface (shell) with some thickness
+                    if (dist <= radius && dist > radius - 3) {
+                        // Color variation based on position
+                        const colorNoise = Math.sin(x * 0.3) * Math.cos(y * 0.4) * Math.sin(z * 0.35);
+                        let color: string;
+                        
+                        if (colorNoise > 0.5) {
+                            color = moonLight;
+                        } else if (colorNoise > 0) {
+                            color = moonGrey;
+                        } else if (colorNoise > -0.3) {
                             color = moonDark;
+                        } else {
+                            color = moonCrater;
                         }
-                        result.push({ pos: [x, y, z], color });
+                        
+                        result.push({ pos: [x, y + radius, z], color });
                     }
                 }
             }
         }
         
-        // ============ CRATERS ============
-        const craters = [
-            { x: 5, z: 5, radius: 4, depth: 2 },
-            { x: -10, z: 8, radius: 3, depth: 1 },
-            { x: 8, z: -12, radius: 5, depth: 2 },
-            { x: -5, z: -8, radius: 3, depth: 1 },
-            { x: 15, z: 0, radius: 4, depth: 2 },
-            { x: -15, z: -5, radius: 3, depth: 1 },
-        ];
+        return result;
+    }, []);
+    
+    // Surface decorations (flag, lander) - separate so they don't rotate
+    const surfaceVoxels = useMemo(() => {
+        const result: { pos: [number, number, number]; color: string }[] = [];
         
-        for (const crater of craters) {
-            for (let dx = -crater.radius; dx <= crater.radius; dx++) {
-                for (let dz = -crater.radius; dz <= crater.radius; dz++) {
-                    const dist = Math.sqrt(dx * dx + dz * dz);
-                    if (dist <= crater.radius) {
-                        const cx = crater.x + dx;
-                        const cz = crater.z + dz;
-                        // Crater rim (raised edge)
-                        if (dist > crater.radius - 1) {
-                            result.push({ pos: [cx, 4, cz], color: moonLight });
-                        }
-                        // Crater floor (lower)
-                        else {
-                            result.push({ pos: [cx, 3 - crater.depth, cz], color: moonCrater });
-                        }
-                    }
-                }
-            }
-        }
+        // Position on top of the sphere
+        const surfaceY = 50; // Top of the moon sphere
         
         // ============ MOONPAY FLAG! ============
         // Flag pole
-        for (let y = 1; y <= 12; y++) {
-            result.push({ pos: [0, y + 3, 0], color: '#c0c0c0' });
+        for (let y = 0; y <= 12; y++) {
+            result.push({ pos: [0, surfaceY + y, 0], color: '#c0c0c0' });
         }
         
         // MoonPay flag (purple and white)
-        for (let y = 8; y <= 14; y++) {
+        for (let y = 6; y <= 12; y++) {
             for (let z = 1; z <= 5; z++) {
-                const isPurple = y < 11;
-                result.push({ pos: [0, y + 3, z], color: isPurple ? COLORS.mpPurple : COLORS.mpWhite });
+                const isPurple = y < 9;
+                result.push({ pos: [0, surfaceY + y, z], color: isPurple ? COLORS.mpPurple : COLORS.mpWhite });
             }
         }
         
         // "M" logo on flag
-        result.push({ pos: [0, 12, 2], color: COLORS.mpWhite });
-        result.push({ pos: [0, 13, 3], color: COLORS.mpWhite });
-        result.push({ pos: [0, 12, 4], color: COLORS.mpWhite });
+        result.push({ pos: [0, surfaceY + 10, 2], color: COLORS.mpWhite });
+        result.push({ pos: [0, surfaceY + 11, 3], color: COLORS.mpWhite });
+        result.push({ pos: [0, surfaceY + 10, 4], color: COLORS.mpWhite });
         
         // ============ LUNAR MODULE ============
         const lmX = -8;
-        const lmZ = 5;
-        const lmBase = 4;
+        const lmZ = 8;
+        const lmBase = surfaceY;
         
         // Descent stage (gold foil)
         for (let x = -2; x <= 2; x++) {
@@ -132,8 +116,6 @@ export const Moon = ({ position }: MoonProps) => {
         for (const [lx, lz] of legs) {
             result.push({ pos: [lmX + lx, lmBase - 1, lmZ + lz], color: '#808080' });
             result.push({ pos: [lmX + lx, lmBase - 2, lmZ + lz], color: '#808080' });
-            // Foot pad
-            result.push({ pos: [lmX + lx, lmBase - 3, lmZ + lz], color: '#606060' });
         }
         
         // Ascent stage
@@ -146,16 +128,6 @@ export const Moon = ({ position }: MoonProps) => {
         
         // Window
         result.push({ pos: [lmX, lmBase + 3, lmZ + 2], color: '#303040' });
-        
-        // ============ FOOTPRINTS ============
-        const footprints = [
-            [0, 3], [1, 5], [0, 7], [-1, 9], [0, 11],
-            [-2, 4], [-4, 5], [-6, 6],
-        ];
-        
-        for (const [fx, fz] of footprints) {
-            result.push({ pos: [fx, 3, fz], color: '#999999' });
-        }
         
         return result;
     }, []);
@@ -183,9 +155,16 @@ export const Moon = ({ position }: MoonProps) => {
             {/* Additional point light from sun */}
             <pointLight position={[200, 100, 0]} intensity={2} distance={500} />
             
-            {/* Moon voxels */}
-            {voxels.map((v) => (
-                <Voxel key={`${v.pos[0]}-${v.pos[1]}-${v.pos[2]}`} position={v.pos} color={v.color} />
+            {/* Spherical Moon - slowly rotating */}
+            <group ref={moonRef}>
+                {moonVoxels.map((v) => (
+                    <Voxel key={`moon-${v.pos[0]}-${v.pos[1]}-${v.pos[2]}`} position={v.pos} color={v.color} />
+                ))}
+            </group>
+            
+            {/* Surface decorations - don't rotate */}
+            {surfaceVoxels.map((v) => (
+                <Voxel key={`surf-${v.pos[0]}-${v.pos[1]}-${v.pos[2]}`} position={v.pos} color={v.color} />
             ))}
         </group>
     );

@@ -494,14 +494,14 @@ const Game3D = () => {
         });
     }, [loadNewQuestion]);
     
-    // Cycle character options
+    // Cycle character options (4 options each: 0-3)
     const cycleOption = useCallback((type: 'head' | 'torso' | 'legs', direction: 'left' | 'right') => {
         const delta = direction === 'right' ? 1 : -1;
         setCharacterConfig(prev => {
             const key = `${type}Index` as keyof CharacterConfig;
             let newVal = prev[key] + delta;
-            if (newVal < 0) newVal = 5;
-            if (newVal > 5) newVal = 0;
+            if (newVal < 0) newVal = 3;
+            if (newVal > 3) newVal = 0;
             return { ...prev, [key]: newVal };
         });
     }, []);
