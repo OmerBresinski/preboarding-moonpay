@@ -56,12 +56,164 @@ const isSpaceLandmark = (landmark: Landmark): boolean => {
     return landmark === 'iss' || landmark === 'moon';
 };
 
+// Color palette for character customization
+const COLOR_PALETTE = [
+    { name: 'White', value: '#FFFFFF' },
+    { name: 'Purple', value: '#7D00FF' },
+    { name: 'Cyan', value: '#00FFFF' },
+    { name: 'Gold', value: '#FFD700' },
+    { name: 'Pink', value: '#FF69B4' },
+    { name: 'Orange', value: '#FF6600' },
+];
+
 // Character configuration
 interface CharacterConfig {
     headIndex: number;
     torsoIndex: number;
     legsIndex: number;
+    headPrimaryColor: string;
+    headSecondaryColor: string;
+    torsoPrimaryColor: string;
+    torsoSecondaryColor: string;
+    legsPrimaryColor: string;
+    legsSecondaryColor: string;
 }
+
+// MoonPay facts for each landmark
+const MOONPAY_FACTS: Record<Landmark, string[]> = {
+    'yacht': [
+        'MoonPay was founded in 2019 in Miami by Ivan Soto-Wright',
+        'Valued at $3.4 billion after Series A funding in 2021',
+        'Processes billions of dollars in transactions annually'
+    ],
+    'statue-of-liberty': [
+        'Available in 160+ countries worldwide',
+        'Supports 80+ cryptocurrencies for purchase',
+        'Processes over $2 billion in annual transactions'
+    ],
+    'eiffel-tower': [
+        'Celebrity investors include Justin Bieber and Snoop Dogg',
+        'Partners with OpenSea, Coinbase, and Bitcoin.com',
+        'Powers crypto purchases for millions of users globally'
+    ],
+    'burj-khalifa': [
+        'Offers instant crypto purchases with credit/debit cards',
+        'Trusted by top NFT marketplaces and crypto platforms',
+        'Supports Apple Pay and Google Pay for seamless purchases'
+    ],
+    'iss': [
+        'Remote-first company with employees across continents',
+        'Offers unlimited PTO and flexible working hours',
+        'Engineering team spans multiple time zones'
+    ],
+    'moon': [
+        'Mission: Make crypto accessible to everyone',
+        'Vision: Leading crypto payments infrastructure',
+        'Building the bridge between traditional finance and crypto'
+    ]
+};
+
+// MoonPay Fact Bubble component
+const MoonPayFactBubble = ({ 
+    landmark, 
+    factIndex, 
+    offsetY 
+}: { 
+    landmark: Landmark; 
+    factIndex: number; 
+    offsetY: number;
+}) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const pos = LANDMARK_POSITIONS[landmark];
+    const facts = MOONPAY_FACTS[landmark];
+    const fact = facts[factIndex];
+    
+    // Offset positions slightly to spread facts around landmark
+    const xOffset = (factIndex - 1) * 20;
+    
+    return (
+        <Html
+            position={[pos[0] + xOffset, pos[1] + offsetY + factIndex * 8, pos[2] + 20]}
+            center
+        >
+            <div 
+                role="button"
+                tabIndex={0}
+                style={{
+                    position: 'relative',
+                    cursor: 'pointer',
+                }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                onFocus={() => setIsHovered(true)}
+                onBlur={() => setIsHovered(false)}
+            >
+                {/* Info icon bubble */}
+                <div style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #7D00FF 0%, #5000A0 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 15px rgba(125, 0, 255, 0.5)',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    transform: isHovered ? 'scale(1.1)' : 'scale(1)',
+                }}>
+                    <span style={{
+                        color: '#fff',
+                        fontSize: 14,
+                        fontWeight: 700,
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}>i</span>
+                </div>
+                
+                {/* Tooltip card */}
+                {isHovered && (
+                    <div style={{
+                        position: 'absolute',
+                        left: 35,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'rgba(20, 10, 40, 0.95)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(125, 0, 255, 0.4)',
+                        borderRadius: 12,
+                        padding: '12px 16px',
+                        minWidth: 220,
+                        maxWidth: 280,
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(125, 0, 255, 0.2)',
+                        zIndex: 100,
+                    }}>
+                        <div style={{
+                            color: '#fff',
+                            fontSize: 13,
+                            fontWeight: 400,
+                            lineHeight: 1.5,
+                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        }}>
+                            {fact}
+                        </div>
+                        {/* Arrow pointing to icon */}
+                        <div style={{
+                            position: 'absolute',
+                            left: -6,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: 0,
+                            height: 0,
+                            borderTop: '6px solid transparent',
+                            borderBottom: '6px solid transparent',
+                            borderRight: '6px solid rgba(125, 0, 255, 0.4)',
+                        }} />
+                    </div>
+                )}
+            </div>
+        </Html>
+    );
+};
 
 // Landmark name label component
 const LandmarkLabel = ({ landmark }: { landmark: Landmark }) => {
@@ -78,16 +230,17 @@ const LandmarkLabel = ({ landmark }: { landmark: Landmark }) => {
             }}
         >
             <div style={{
-                background: 'rgba(0, 0, 0, 0.7)',
+                background: 'rgba(20, 10, 40, 0.9)',
+                backdropFilter: 'blur(10px)',
                 color: '#fff',
-                padding: '8px 16px',
-                borderRadius: 20,
+                padding: '10px 18px',
+                borderRadius: 12,
                 fontSize: 14,
                 fontWeight: 600,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 whiteSpace: 'nowrap',
-                border: '2px solid rgba(125, 0, 255, 0.5)',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                border: '1px solid rgba(125, 0, 255, 0.4)',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(125, 0, 255, 0.2)',
             }}>
                 📍 {LANDMARK_NAMES[landmark]}
             </div>
@@ -315,15 +468,43 @@ const SceneContent = ({
                 <>
                     <Yacht position={LANDMARK_POSITIONS['yacht']} />
                     <LandmarkLabel landmark="yacht" />
+                    {!isFlying && currentLandmark === 'yacht' && (
+                        <>
+                            <MoonPayFactBubble landmark="yacht" factIndex={0} offsetY={10} />
+                            <MoonPayFactBubble landmark="yacht" factIndex={1} offsetY={10} />
+                            <MoonPayFactBubble landmark="yacht" factIndex={2} offsetY={10} />
+                        </>
+                    )}
                     
                     <StatueOfLiberty position={LANDMARK_POSITIONS['statue-of-liberty']} />
                     <LandmarkLabel landmark="statue-of-liberty" />
+                    {!isFlying && currentLandmark === 'statue-of-liberty' && (
+                        <>
+                            <MoonPayFactBubble landmark="statue-of-liberty" factIndex={0} offsetY={35} />
+                            <MoonPayFactBubble landmark="statue-of-liberty" factIndex={1} offsetY={35} />
+                            <MoonPayFactBubble landmark="statue-of-liberty" factIndex={2} offsetY={35} />
+                        </>
+                    )}
                     
                     <EiffelTower position={LANDMARK_POSITIONS['eiffel-tower']} />
                     <LandmarkLabel landmark="eiffel-tower" />
+                    {!isFlying && currentLandmark === 'eiffel-tower' && (
+                        <>
+                            <MoonPayFactBubble landmark="eiffel-tower" factIndex={0} offsetY={50} />
+                            <MoonPayFactBubble landmark="eiffel-tower" factIndex={1} offsetY={50} />
+                            <MoonPayFactBubble landmark="eiffel-tower" factIndex={2} offsetY={50} />
+                        </>
+                    )}
                     
                     <BurjKhalifa position={LANDMARK_POSITIONS['burj-khalifa']} />
                     <LandmarkLabel landmark="burj-khalifa" />
+                    {!isFlying && currentLandmark === 'burj-khalifa' && (
+                        <>
+                            <MoonPayFactBubble landmark="burj-khalifa" factIndex={0} offsetY={60} />
+                            <MoonPayFactBubble landmark="burj-khalifa" factIndex={1} offsetY={60} />
+                            <MoonPayFactBubble landmark="burj-khalifa" factIndex={2} offsetY={60} />
+                        </>
+                    )}
                 </>
             )}
             
@@ -334,6 +515,13 @@ const SceneContent = ({
                         <>
                             <ISS position={LANDMARK_POSITIONS['iss']} />
                             <LandmarkLabel landmark="iss" />
+                            {!isFlying && currentLandmark === 'iss' && (
+                                <>
+                                    <MoonPayFactBubble landmark="iss" factIndex={0} offsetY={15} />
+                                    <MoonPayFactBubble landmark="iss" factIndex={1} offsetY={15} />
+                                    <MoonPayFactBubble landmark="iss" factIndex={2} offsetY={15} />
+                                </>
+                            )}
                         </>
                     )}
                     
@@ -341,6 +529,13 @@ const SceneContent = ({
                         <>
                             <Moon position={LANDMARK_POSITIONS['moon']} />
                             <LandmarkLabel landmark="moon" />
+                            {!isFlying && currentLandmark === 'moon' && (
+                                <>
+                                    <MoonPayFactBubble landmark="moon" factIndex={0} offsetY={20} />
+                                    <MoonPayFactBubble landmark="moon" factIndex={1} offsetY={20} />
+                                    <MoonPayFactBubble landmark="moon" factIndex={2} offsetY={20} />
+                                </>
+                            )}
                         </>
                     )}
                 </>
@@ -388,7 +583,13 @@ const Game3D = () => {
     const [characterConfig, setCharacterConfig] = useState<CharacterConfig>({
         headIndex: 0,
         torsoIndex: 0,
-        legsIndex: 0
+        legsIndex: 0,
+        headPrimaryColor: '#FFFFFF',
+        headSecondaryColor: '#7D00FF',
+        torsoPrimaryColor: '#FFFFFF',
+        torsoSecondaryColor: '#7D00FF',
+        legsPrimaryColor: '#FFFFFF',
+        legsSecondaryColor: '#7D00FF',
     });
     
     // Load new question
@@ -443,11 +644,18 @@ const Game3D = () => {
         const delta = direction === 'right' ? 1 : -1;
         setCharacterConfig(prev => {
             const key = `${type}Index` as keyof CharacterConfig;
-            let newVal = prev[key] + delta;
+            const currentVal = prev[key] as number;
+            let newVal = currentVal + delta;
             if (newVal < 0) newVal = 3;
             if (newVal > 3) newVal = 0;
             return { ...prev, [key]: newVal };
         });
+    }, []);
+    
+    // Change color for a body part
+    const changeColor = useCallback((part: 'head' | 'torso' | 'legs', colorType: 'primary' | 'secondary', color: string) => {
+        const key = `${part}${colorType === 'primary' ? 'Primary' : 'Secondary'}Color` as keyof CharacterConfig;
+        setCharacterConfig(prev => ({ ...prev, [key]: color }));
     }, []);
 
     return (
@@ -475,15 +683,178 @@ const Game3D = () => {
             {gameState.phase === 'character-creation' && (
                 <>
                     <div style={styles.creationOverlay}>
-                        <h1 style={styles.creationWelcomeTitle}>Welcome to MoonPay, {playerName}! 🎉</h1>
-                        <p style={styles.creationWelcomeText}>
-                            Congratulations on making it through the recruitment process — we're thrilled to have you join the team!
-                            <br /><br />
-                            Before you dive into your new role, we've prepared a little adventure for you.
-                            Test your crypto knowledge as you journey from a luxury yacht all the way to the moon!
-                        </p>
-                        <p style={styles.subtitle}>Click the arrows to customize your astronaut</p>
+                        <div style={styles.creationCard}>
+                            <h1 style={styles.creationWelcomeTitle}>Welcome to MoonPay, {playerName}! 🎉</h1>
+                            <p style={styles.creationWelcomeText}>
+                                Congratulations on making it through the recruitment process — we're thrilled to have you join the team!
+                                <br /><br />
+                                Before you dive into your new role, we've prepared a little adventure for you.
+                                Test your crypto knowledge as you journey from a luxury yacht all the way to the moon!
+                            </p>
+                            <p style={styles.subtitle}>Click the arrows to customize your astronaut</p>
+                        </div>
                     </div>
+                    
+                    {/* Color Selectors Panel */}
+                    <div style={styles.colorPanelContainer}>
+                        <div style={styles.colorPanel}>
+                            <h3 style={styles.colorPanelTitle}>🎨 Customize Colors</h3>
+                            
+                            {/* Head Colors */}
+                            <div style={styles.colorSection}>
+                                <span style={styles.colorSectionLabel}>Helmet</span>
+                                <div style={styles.colorRow}>
+                                    <span style={styles.colorTypeLabel}>Main</span>
+                                    <div style={styles.colorSwatches}>
+                                        {COLOR_PALETTE.map((color) => (
+                                            <button
+                                                key={`head-primary-${color.value}`}
+                                                type="button"
+                                                onClick={() => changeColor('head', 'primary', color.value)}
+                                                style={{
+                                                    ...styles.colorSwatch,
+                                                    backgroundColor: color.value,
+                                                    border: characterConfig.headPrimaryColor === color.value 
+                                                        ? '3px solid #7D00FF' 
+                                                        : '2px solid rgba(255,255,255,0.3)',
+                                                    boxShadow: characterConfig.headPrimaryColor === color.value 
+                                                        ? '0 0 10px rgba(125, 0, 255, 0.7)' 
+                                                        : 'none',
+                                                }}
+                                                title={color.name}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div style={styles.colorRow}>
+                                    <span style={styles.colorTypeLabel}>Visor</span>
+                                    <div style={styles.colorSwatches}>
+                                        {COLOR_PALETTE.map((color) => (
+                                            <button
+                                                key={`head-secondary-${color.value}`}
+                                                type="button"
+                                                onClick={() => changeColor('head', 'secondary', color.value)}
+                                                style={{
+                                                    ...styles.colorSwatch,
+                                                    backgroundColor: color.value,
+                                                    border: characterConfig.headSecondaryColor === color.value 
+                                                        ? '3px solid #7D00FF' 
+                                                        : '2px solid rgba(255,255,255,0.3)',
+                                                    boxShadow: characterConfig.headSecondaryColor === color.value 
+                                                        ? '0 0 10px rgba(125, 0, 255, 0.7)' 
+                                                        : 'none',
+                                                }}
+                                                title={color.name}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Torso Colors */}
+                            <div style={styles.colorSection}>
+                                <span style={styles.colorSectionLabel}>Suit</span>
+                                <div style={styles.colorRow}>
+                                    <span style={styles.colorTypeLabel}>Main</span>
+                                    <div style={styles.colorSwatches}>
+                                        {COLOR_PALETTE.map((color) => (
+                                            <button
+                                                key={`torso-primary-${color.value}`}
+                                                type="button"
+                                                onClick={() => changeColor('torso', 'primary', color.value)}
+                                                style={{
+                                                    ...styles.colorSwatch,
+                                                    backgroundColor: color.value,
+                                                    border: characterConfig.torsoPrimaryColor === color.value 
+                                                        ? '3px solid #7D00FF' 
+                                                        : '2px solid rgba(255,255,255,0.3)',
+                                                    boxShadow: characterConfig.torsoPrimaryColor === color.value 
+                                                        ? '0 0 10px rgba(125, 0, 255, 0.7)' 
+                                                        : 'none',
+                                                }}
+                                                title={color.name}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div style={styles.colorRow}>
+                                    <span style={styles.colorTypeLabel}>Accent</span>
+                                    <div style={styles.colorSwatches}>
+                                        {COLOR_PALETTE.map((color) => (
+                                            <button
+                                                key={`torso-secondary-${color.value}`}
+                                                type="button"
+                                                onClick={() => changeColor('torso', 'secondary', color.value)}
+                                                style={{
+                                                    ...styles.colorSwatch,
+                                                    backgroundColor: color.value,
+                                                    border: characterConfig.torsoSecondaryColor === color.value 
+                                                        ? '3px solid #7D00FF' 
+                                                        : '2px solid rgba(255,255,255,0.3)',
+                                                    boxShadow: characterConfig.torsoSecondaryColor === color.value 
+                                                        ? '0 0 10px rgba(125, 0, 255, 0.7)' 
+                                                        : 'none',
+                                                }}
+                                                title={color.name}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Legs Colors */}
+                            <div style={styles.colorSection}>
+                                <span style={styles.colorSectionLabel}>Legs</span>
+                                <div style={styles.colorRow}>
+                                    <span style={styles.colorTypeLabel}>Main</span>
+                                    <div style={styles.colorSwatches}>
+                                        {COLOR_PALETTE.map((color) => (
+                                            <button
+                                                key={`legs-primary-${color.value}`}
+                                                type="button"
+                                                onClick={() => changeColor('legs', 'primary', color.value)}
+                                                style={{
+                                                    ...styles.colorSwatch,
+                                                    backgroundColor: color.value,
+                                                    border: characterConfig.legsPrimaryColor === color.value 
+                                                        ? '3px solid #7D00FF' 
+                                                        : '2px solid rgba(255,255,255,0.3)',
+                                                    boxShadow: characterConfig.legsPrimaryColor === color.value 
+                                                        ? '0 0 10px rgba(125, 0, 255, 0.7)' 
+                                                        : 'none',
+                                                }}
+                                                title={color.name}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div style={styles.colorRow}>
+                                    <span style={styles.colorTypeLabel}>Boots</span>
+                                    <div style={styles.colorSwatches}>
+                                        {COLOR_PALETTE.map((color) => (
+                                            <button
+                                                key={`legs-secondary-${color.value}`}
+                                                type="button"
+                                                onClick={() => changeColor('legs', 'secondary', color.value)}
+                                                style={{
+                                                    ...styles.colorSwatch,
+                                                    backgroundColor: color.value,
+                                                    border: characterConfig.legsSecondaryColor === color.value 
+                                                        ? '3px solid #7D00FF' 
+                                                        : '2px solid rgba(255,255,255,0.3)',
+                                                    boxShadow: characterConfig.legsSecondaryColor === color.value 
+                                                        ? '0 0 10px rgba(125, 0, 255, 0.7)' 
+                                                        : 'none',
+                                                }}
+                                                title={color.name}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div style={styles.bottomButtonContainer}>
                         <button type="button" style={styles.startButton} onClick={handleStartGame}>
                             🚀 Begin Your Journey
@@ -592,36 +963,45 @@ const styles: { [key: string]: React.CSSProperties } = {
         top: 20,
         left: 0,
         right: 0,
-        textAlign: 'center',
+        display: 'flex',
+        justifyContent: 'center',
         pointerEvents: 'none',
         padding: '0 20px'
     },
+    creationCard: {
+        background: 'rgba(20, 10, 40, 0.85)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(125, 0, 255, 0.3)',
+        borderRadius: 20,
+        padding: '30px 40px',
+        maxWidth: 600,
+        textAlign: 'center',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(125, 0, 255, 0.15)'
+    },
     creationWelcomeTitle: {
         color: '#FFF',
-        fontSize: 32,
+        fontSize: 28,
         fontWeight: 700,
         margin: 0,
-        textShadow: '0 2px 20px rgba(0,0,0,0.8)',
         fontFamily: FONT_FAMILY
     },
     creationWelcomeText: {
-        color: 'rgba(255, 255, 255, 0.9)',
-        fontSize: 16,
+        color: 'rgba(255, 255, 255, 0.85)',
+        fontSize: 15,
         fontWeight: 400,
-        marginTop: 12,
-        lineHeight: 1.6,
-        textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+        marginTop: 16,
+        lineHeight: 1.7,
         fontFamily: FONT_FAMILY
     },
     subtitle: {
-        color: '#7D00FF',
-        fontSize: 14,
+        color: '#A855F7',
+        fontSize: 13,
         fontWeight: 600,
-        marginTop: 16,
+        marginTop: 20,
+        marginBottom: 0,
         textTransform: 'uppercase',
-        letterSpacing: 1,
-        fontFamily: FONT_FAMILY,
-        textShadow: '0 1px 4px rgba(0,0,0,0.8)'
+        letterSpacing: 1.5,
+        fontFamily: FONT_FAMILY
     },
     bottomButtonContainer: {
         position: 'absolute',
@@ -642,6 +1022,68 @@ const styles: { [key: string]: React.CSSProperties } = {
         cursor: 'pointer',
         boxShadow: '0 4px 20px rgba(125, 0, 255, 0.5)',
         fontFamily: FONT_FAMILY
+    },
+    colorPanelContainer: {
+        position: 'absolute',
+        right: 20,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        zIndex: 10
+    },
+    colorPanel: {
+        background: 'rgba(20, 10, 40, 0.9)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(125, 0, 255, 0.3)',
+        borderRadius: 16,
+        padding: '20px',
+        minWidth: 200,
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(125, 0, 255, 0.15)'
+    },
+    colorPanelTitle: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 700,
+        margin: '0 0 16px 0',
+        textAlign: 'center' as const,
+        fontFamily: FONT_FAMILY
+    },
+    colorSection: {
+        marginBottom: 16
+    },
+    colorSectionLabel: {
+        color: '#A855F7',
+        fontSize: 12,
+        fontWeight: 700,
+        textTransform: 'uppercase' as const,
+        letterSpacing: 1,
+        display: 'block',
+        marginBottom: 8,
+        fontFamily: FONT_FAMILY
+    },
+    colorRow: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 6
+    },
+    colorTypeLabel: {
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: 11,
+        fontWeight: 500,
+        width: 40,
+        fontFamily: FONT_FAMILY
+    },
+    colorSwatches: {
+        display: 'flex',
+        gap: 4,
+        flexWrap: 'wrap' as const
+    },
+    colorSwatch: {
+        width: 24,
+        height: 24,
+        borderRadius: 6,
+        cursor: 'pointer',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease'
     },
     victoryOverlay: {
         position: 'absolute',

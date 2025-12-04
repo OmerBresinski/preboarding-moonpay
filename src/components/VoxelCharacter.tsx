@@ -8,6 +8,12 @@ interface CharacterConfig {
     headIndex: number;
     torsoIndex: number;
     legsIndex: number;
+    headPrimaryColor: string;
+    headSecondaryColor: string;
+    torsoPrimaryColor: string;
+    torsoSecondaryColor: string;
+    legsPrimaryColor: string;
+    legsSecondaryColor: string;
 }
 
 interface VoxelCharacterProps {
@@ -53,51 +59,53 @@ const Voxel = ({ position, color, size = 1 }: { position: [number, number, numbe
 );
 
 // Head component with different helmet shapes
-const VoxelHead = ({ config, headY }: { config: number; headY: number }) => {
+const VoxelHead = ({ config, headY, primaryColor, secondaryColor }: { config: number; headY: number; primaryColor: string; secondaryColor: string }) => {
     const option = HEAD_OPTIONS[config];
+    const helmetColor = primaryColor;
+    const visorColor = secondaryColor;
     
     // Round helmet (original)
     if (option.shape === 'round') {
         return (
             <group position={[0, headY, 0]}>
                 {/* Back layer */}
-                <Voxel position={[-1, 2, -1]} color={option.helmetColor} />
-                <Voxel position={[0, 2, -1]} color={option.helmetColor} />
-                <Voxel position={[1, 2, -1]} color={option.helmetColor} />
-                <Voxel position={[-1, 3, -1]} color={option.helmetColor} />
-                <Voxel position={[0, 3, -1]} color={option.helmetColor} />
-                <Voxel position={[1, 3, -1]} color={option.helmetColor} />
-                <Voxel position={[-1, 4, -1]} color={option.helmetColor} />
-                <Voxel position={[0, 4, -1]} color={option.helmetColor} />
-                <Voxel position={[1, 4, -1]} color={option.helmetColor} />
+                <Voxel position={[-1, 2, -1]} color={helmetColor} />
+                <Voxel position={[0, 2, -1]} color={helmetColor} />
+                <Voxel position={[1, 2, -1]} color={helmetColor} />
+                <Voxel position={[-1, 3, -1]} color={helmetColor} />
+                <Voxel position={[0, 3, -1]} color={helmetColor} />
+                <Voxel position={[1, 3, -1]} color={helmetColor} />
+                <Voxel position={[-1, 4, -1]} color={helmetColor} />
+                <Voxel position={[0, 4, -1]} color={helmetColor} />
+                <Voxel position={[1, 4, -1]} color={helmetColor} />
                 {/* Sides */}
-                <Voxel position={[-2, 2, 0]} color={option.helmetColor} />
-                <Voxel position={[-2, 3, 0]} color={option.helmetColor} />
-                <Voxel position={[-2, 4, 0]} color={option.helmetColor} />
-                <Voxel position={[2, 2, 0]} color={option.helmetColor} />
-                <Voxel position={[2, 3, 0]} color={option.helmetColor} />
-                <Voxel position={[2, 4, 0]} color={option.helmetColor} />
+                <Voxel position={[-2, 2, 0]} color={helmetColor} />
+                <Voxel position={[-2, 3, 0]} color={helmetColor} />
+                <Voxel position={[-2, 4, 0]} color={helmetColor} />
+                <Voxel position={[2, 2, 0]} color={helmetColor} />
+                <Voxel position={[2, 3, 0]} color={helmetColor} />
+                <Voxel position={[2, 4, 0]} color={helmetColor} />
                 {/* Top */}
-                <Voxel position={[-1, 5, 0]} color={option.helmetColor} />
-                <Voxel position={[0, 5, 0]} color={option.helmetColor} />
-                <Voxel position={[1, 5, 0]} color={option.helmetColor} />
-                <Voxel position={[-1, 5, -1]} color={option.helmetColor} />
-                <Voxel position={[0, 5, -1]} color={option.helmetColor} />
-                <Voxel position={[1, 5, -1]} color={option.helmetColor} />
+                <Voxel position={[-1, 5, 0]} color={helmetColor} />
+                <Voxel position={[0, 5, 0]} color={helmetColor} />
+                <Voxel position={[1, 5, 0]} color={helmetColor} />
+                <Voxel position={[-1, 5, -1]} color={helmetColor} />
+                <Voxel position={[0, 5, -1]} color={helmetColor} />
+                <Voxel position={[1, 5, -1]} color={helmetColor} />
                 {/* Bottom */}
-                <Voxel position={[-1, 1, 0]} color={option.helmetColor} />
-                <Voxel position={[0, 1, 0]} color={option.helmetColor} />
-                <Voxel position={[1, 1, 0]} color={option.helmetColor} />
+                <Voxel position={[-1, 1, 0]} color={helmetColor} />
+                <Voxel position={[0, 1, 0]} color={helmetColor} />
+                <Voxel position={[1, 1, 0]} color={helmetColor} />
                 {/* Visor */}
-                <Voxel position={[-1, 2, 1]} color={option.visorColor} />
-                <Voxel position={[0, 2, 1]} color={option.visorColor} />
-                <Voxel position={[1, 2, 1]} color={option.visorColor} />
-                <Voxel position={[-1, 3, 1]} color={option.visorColor} />
-                <Voxel position={[0, 3, 1]} color={option.visorColor} />
-                <Voxel position={[1, 3, 1]} color={option.visorColor} />
-                <Voxel position={[-1, 4, 1]} color={option.visorColor} />
-                <Voxel position={[0, 4, 1]} color={option.visorColor} />
-                <Voxel position={[1, 4, 1]} color={option.visorColor} />
+                <Voxel position={[-1, 2, 1]} color={visorColor} />
+                <Voxel position={[0, 2, 1]} color={visorColor} />
+                <Voxel position={[1, 2, 1]} color={visorColor} />
+                <Voxel position={[-1, 3, 1]} color={visorColor} />
+                <Voxel position={[0, 3, 1]} color={visorColor} />
+                <Voxel position={[1, 3, 1]} color={visorColor} />
+                <Voxel position={[-1, 4, 1]} color={visorColor} />
+                <Voxel position={[0, 4, 1]} color={visorColor} />
+                <Voxel position={[1, 4, 1]} color={visorColor} />
             </group>
         );
     }
@@ -109,30 +117,30 @@ const VoxelHead = ({ config, headY }: { config: number; headY: number }) => {
                 {/* Solid cube helmet */}
                 {[-2, -1, 0, 1, 2].map(x => 
                     [1, 2, 3, 4, 5].map(y =>
-                        <Voxel key={`sq-${x}-${y}`} position={[x, y, -1]} color={option.helmetColor} />
+                        <Voxel key={`sq-${x}-${y}`} position={[x, y, -1]} color={helmetColor} />
                     )
                 )}
                 {/* Sides */}
                 {[-2, 2].map(x => 
                     [1, 2, 3, 4, 5].map(y =>
-                        <Voxel key={`side-${x}-${y}`} position={[x, y, 0]} color={option.helmetColor} />
+                        <Voxel key={`side-${x}-${y}`} position={[x, y, 0]} color={helmetColor} />
                     )
                 )}
                 {/* Top row */}
                 {[-1, 0, 1].map(x =>
-                    <Voxel key={`top-${x}`} position={[x, 5, 0]} color={option.helmetColor} />
+                    <Voxel key={`top-${x}`} position={[x, 5, 0]} color={helmetColor} />
                 )}
                 {/* Square visor - smaller */}
-                <Voxel position={[-1, 2, 1]} color={option.visorColor} />
-                <Voxel position={[0, 2, 1]} color={option.visorColor} />
-                <Voxel position={[1, 2, 1]} color={option.visorColor} />
-                <Voxel position={[-1, 3, 1]} color={option.visorColor} />
-                <Voxel position={[0, 3, 1]} color={option.visorColor} />
-                <Voxel position={[1, 3, 1]} color={option.visorColor} />
+                <Voxel position={[-1, 2, 1]} color={visorColor} />
+                <Voxel position={[0, 2, 1]} color={visorColor} />
+                <Voxel position={[1, 2, 1]} color={visorColor} />
+                <Voxel position={[-1, 3, 1]} color={visorColor} />
+                <Voxel position={[0, 3, 1]} color={visorColor} />
+                <Voxel position={[1, 3, 1]} color={visorColor} />
                 {/* Bottom edge */}
-                <Voxel position={[-1, 1, 0]} color={option.helmetColor} />
-                <Voxel position={[0, 1, 0]} color={option.helmetColor} />
-                <Voxel position={[1, 1, 0]} color={option.helmetColor} />
+                <Voxel position={[-1, 1, 0]} color={helmetColor} />
+                <Voxel position={[0, 1, 0]} color={helmetColor} />
+                <Voxel position={[1, 1, 0]} color={helmetColor} />
             </group>
         );
     }
@@ -142,33 +150,33 @@ const VoxelHead = ({ config, headY }: { config: number; headY: number }) => {
         return (
             <group position={[0, headY, 0]}>
                 {/* Base helmet */}
-                <Voxel position={[-1, 2, -1]} color={option.helmetColor} />
-                <Voxel position={[0, 2, -1]} color={option.helmetColor} />
-                <Voxel position={[1, 2, -1]} color={option.helmetColor} />
-                <Voxel position={[-1, 3, -1]} color={option.helmetColor} />
-                <Voxel position={[0, 3, -1]} color={option.helmetColor} />
-                <Voxel position={[1, 3, -1]} color={option.helmetColor} />
+                <Voxel position={[-1, 2, -1]} color={helmetColor} />
+                <Voxel position={[0, 2, -1]} color={helmetColor} />
+                <Voxel position={[1, 2, -1]} color={helmetColor} />
+                <Voxel position={[-1, 3, -1]} color={helmetColor} />
+                <Voxel position={[0, 3, -1]} color={helmetColor} />
+                <Voxel position={[1, 3, -1]} color={helmetColor} />
                 {/* Sides */}
-                <Voxel position={[-2, 2, 0]} color={option.helmetColor} />
-                <Voxel position={[-2, 3, 0]} color={option.helmetColor} />
-                <Voxel position={[2, 2, 0]} color={option.helmetColor} />
-                <Voxel position={[2, 3, 0]} color={option.helmetColor} />
+                <Voxel position={[-2, 2, 0]} color={helmetColor} />
+                <Voxel position={[-2, 3, 0]} color={helmetColor} />
+                <Voxel position={[2, 2, 0]} color={helmetColor} />
+                <Voxel position={[2, 3, 0]} color={helmetColor} />
                 {/* Pointed top */}
-                <Voxel position={[-1, 4, 0]} color={option.helmetColor} />
-                <Voxel position={[0, 4, 0]} color={option.helmetColor} />
-                <Voxel position={[1, 4, 0]} color={option.helmetColor} />
-                <Voxel position={[0, 5, 0]} color={option.helmetColor} />
-                <Voxel position={[0, 6, 0]} color={option.visorColor} /> {/* Antenna/spike */}
-                <Voxel position={[0, 4, -1]} color={option.helmetColor} />
+                <Voxel position={[-1, 4, 0]} color={helmetColor} />
+                <Voxel position={[0, 4, 0]} color={helmetColor} />
+                <Voxel position={[1, 4, 0]} color={helmetColor} />
+                <Voxel position={[0, 5, 0]} color={helmetColor} />
+                <Voxel position={[0, 6, 0]} color={visorColor} /> {/* Antenna/spike */}
+                <Voxel position={[0, 4, -1]} color={helmetColor} />
                 {/* Bottom */}
-                <Voxel position={[-1, 1, 0]} color={option.helmetColor} />
-                <Voxel position={[0, 1, 0]} color={option.helmetColor} />
-                <Voxel position={[1, 1, 0]} color={option.helmetColor} />
+                <Voxel position={[-1, 1, 0]} color={helmetColor} />
+                <Voxel position={[0, 1, 0]} color={helmetColor} />
+                <Voxel position={[1, 1, 0]} color={helmetColor} />
                 {/* Narrow visor */}
-                <Voxel position={[-1, 2, 1]} color={option.visorColor} />
-                <Voxel position={[0, 2, 1]} color={option.visorColor} />
-                <Voxel position={[1, 2, 1]} color={option.visorColor} />
-                <Voxel position={[0, 3, 1]} color={option.visorColor} />
+                <Voxel position={[-1, 2, 1]} color={visorColor} />
+                <Voxel position={[0, 2, 1]} color={visorColor} />
+                <Voxel position={[1, 2, 1]} color={visorColor} />
+                <Voxel position={[0, 3, 1]} color={visorColor} />
             </group>
         );
     }
@@ -177,77 +185,79 @@ const VoxelHead = ({ config, headY }: { config: number; headY: number }) => {
     return (
         <group position={[0, headY, 0]}>
             {/* Minimal back */}
-            <Voxel position={[0, 2, -1]} color={option.helmetColor} />
-            <Voxel position={[0, 3, -1]} color={option.helmetColor} />
+            <Voxel position={[0, 2, -1]} color={helmetColor} />
+            <Voxel position={[0, 3, -1]} color={helmetColor} />
             {/* Collar */}
-            <Voxel position={[-1, 1, 0]} color={option.helmetColor} />
-            <Voxel position={[0, 1, 0]} color={option.helmetColor} />
-            <Voxel position={[1, 1, 0]} color={option.helmetColor} />
-            <Voxel position={[-1, 1, -1]} color={option.helmetColor} />
-            <Voxel position={[1, 1, -1]} color={option.helmetColor} />
+            <Voxel position={[-1, 1, 0]} color={helmetColor} />
+            <Voxel position={[0, 1, 0]} color={helmetColor} />
+            <Voxel position={[1, 1, 0]} color={helmetColor} />
+            <Voxel position={[-1, 1, -1]} color={helmetColor} />
+            <Voxel position={[1, 1, -1]} color={helmetColor} />
             {/* Large bubble visor - wraps around */}
-            <Voxel position={[-2, 2, 0]} color={option.visorColor} />
-            <Voxel position={[-2, 3, 0]} color={option.visorColor} />
-            <Voxel position={[-2, 4, 0]} color={option.visorColor} />
-            <Voxel position={[2, 2, 0]} color={option.visorColor} />
-            <Voxel position={[2, 3, 0]} color={option.visorColor} />
-            <Voxel position={[2, 4, 0]} color={option.visorColor} />
-            <Voxel position={[-1, 2, 1]} color={option.visorColor} />
-            <Voxel position={[0, 2, 1]} color={option.visorColor} />
-            <Voxel position={[1, 2, 1]} color={option.visorColor} />
-            <Voxel position={[-1, 3, 1]} color={option.visorColor} />
-            <Voxel position={[0, 3, 1]} color={option.visorColor} />
-            <Voxel position={[1, 3, 1]} color={option.visorColor} />
-            <Voxel position={[-1, 4, 1]} color={option.visorColor} />
-            <Voxel position={[0, 4, 1]} color={option.visorColor} />
-            <Voxel position={[1, 4, 1]} color={option.visorColor} />
-            <Voxel position={[-1, 5, 0]} color={option.visorColor} />
-            <Voxel position={[0, 5, 0]} color={option.visorColor} />
-            <Voxel position={[1, 5, 0]} color={option.visorColor} />
-            <Voxel position={[0, 5, 1]} color={option.visorColor} />
+            <Voxel position={[-2, 2, 0]} color={visorColor} />
+            <Voxel position={[-2, 3, 0]} color={visorColor} />
+            <Voxel position={[-2, 4, 0]} color={visorColor} />
+            <Voxel position={[2, 2, 0]} color={visorColor} />
+            <Voxel position={[2, 3, 0]} color={visorColor} />
+            <Voxel position={[2, 4, 0]} color={visorColor} />
+            <Voxel position={[-1, 2, 1]} color={visorColor} />
+            <Voxel position={[0, 2, 1]} color={visorColor} />
+            <Voxel position={[1, 2, 1]} color={visorColor} />
+            <Voxel position={[-1, 3, 1]} color={visorColor} />
+            <Voxel position={[0, 3, 1]} color={visorColor} />
+            <Voxel position={[1, 3, 1]} color={visorColor} />
+            <Voxel position={[-1, 4, 1]} color={visorColor} />
+            <Voxel position={[0, 4, 1]} color={visorColor} />
+            <Voxel position={[1, 4, 1]} color={visorColor} />
+            <Voxel position={[-1, 5, 0]} color={visorColor} />
+            <Voxel position={[0, 5, 0]} color={visorColor} />
+            <Voxel position={[1, 5, 0]} color={visorColor} />
+            <Voxel position={[0, 5, 1]} color={visorColor} />
         </group>
     );
 };
 
 // Torso component with different shapes
-const VoxelTorso = ({ config, torsoY }: { config: number; torsoY: number }) => {
+const VoxelTorso = ({ config, torsoY, primaryColor, secondaryColor }: { config: number; torsoY: number; primaryColor: string; secondaryColor: string }) => {
     const option = TORSO_OPTIONS[config];
+    const color1 = primaryColor;
+    const color2 = secondaryColor;
     
     // Standard suit
     if (option.shape === 'standard') {
         return (
             <group position={[0, torsoY, 0]}>
                 {/* Main body */}
-                <Voxel position={[-2, 0, 0]} color={option.color1} />
-                <Voxel position={[-1, 0, 0]} color={option.color1} />
-                <Voxel position={[0, 0, 0]} color={option.color2} />
-                <Voxel position={[1, 0, 0]} color={option.color1} />
-                <Voxel position={[2, 0, 0]} color={option.color1} />
-                <Voxel position={[-2, 1, 0]} color={option.color1} />
-                <Voxel position={[-1, 1, 0]} color={option.color1} />
-                <Voxel position={[0, 1, 0]} color={option.color2} />
-                <Voxel position={[1, 1, 0]} color={option.color1} />
-                <Voxel position={[2, 1, 0]} color={option.color1} />
-                <Voxel position={[-2, 2, 0]} color={option.color1} />
-                <Voxel position={[-1, 2, 0]} color={option.color1} />
-                <Voxel position={[0, 2, 0]} color={option.color2} />
-                <Voxel position={[1, 2, 0]} color={option.color1} />
-                <Voxel position={[2, 2, 0]} color={option.color1} />
+                <Voxel position={[-2, 0, 0]} color={color1} />
+                <Voxel position={[-1, 0, 0]} color={color1} />
+                <Voxel position={[0, 0, 0]} color={color2} />
+                <Voxel position={[1, 0, 0]} color={color1} />
+                <Voxel position={[2, 0, 0]} color={color1} />
+                <Voxel position={[-2, 1, 0]} color={color1} />
+                <Voxel position={[-1, 1, 0]} color={color1} />
+                <Voxel position={[0, 1, 0]} color={color2} />
+                <Voxel position={[1, 1, 0]} color={color1} />
+                <Voxel position={[2, 1, 0]} color={color1} />
+                <Voxel position={[-2, 2, 0]} color={color1} />
+                <Voxel position={[-1, 2, 0]} color={color1} />
+                <Voxel position={[0, 2, 0]} color={color2} />
+                <Voxel position={[1, 2, 0]} color={color1} />
+                <Voxel position={[2, 2, 0]} color={color1} />
                 {/* Arms */}
-                <Voxel position={[-3, 2, 0]} color={option.color1} />
-                <Voxel position={[3, 2, 0]} color={option.color1} />
-                <Voxel position={[-3, 1, 0]} color={option.color1} />
-                <Voxel position={[3, 1, 0]} color={option.color1} />
+                <Voxel position={[-3, 2, 0]} color={color1} />
+                <Voxel position={[3, 2, 0]} color={color1} />
+                <Voxel position={[-3, 1, 0]} color={color1} />
+                <Voxel position={[3, 1, 0]} color={color1} />
                 {/* Back */}
-                <Voxel position={[-1, 0, -1]} color={option.color1} />
-                <Voxel position={[0, 0, -1]} color={option.color1} />
-                <Voxel position={[1, 0, -1]} color={option.color1} />
-                <Voxel position={[-1, 1, -1]} color={option.color1} />
-                <Voxel position={[0, 1, -1]} color={option.color1} />
-                <Voxel position={[1, 1, -1]} color={option.color1} />
-                <Voxel position={[-1, 2, -1]} color={option.color1} />
-                <Voxel position={[0, 2, -1]} color={option.color1} />
-                <Voxel position={[1, 2, -1]} color={option.color1} />
+                <Voxel position={[-1, 0, -1]} color={color1} />
+                <Voxel position={[0, 0, -1]} color={color1} />
+                <Voxel position={[1, 0, -1]} color={color1} />
+                <Voxel position={[-1, 1, -1]} color={color1} />
+                <Voxel position={[0, 1, -1]} color={color1} />
+                <Voxel position={[1, 1, -1]} color={color1} />
+                <Voxel position={[-1, 2, -1]} color={color1} />
+                <Voxel position={[0, 2, -1]} color={color1} />
+                <Voxel position={[1, 2, -1]} color={color1} />
             </group>
         );
     }
@@ -259,25 +269,25 @@ const VoxelTorso = ({ config, torsoY }: { config: number; torsoY: number }) => {
                 {/* Wide body */}
                 {[-3, -2, -1, 0, 1, 2, 3].map(x =>
                     [0, 1, 2, 3].map(y =>
-                        <Voxel key={`bulky-${x}-${y}`} position={[x, y, 0]} color={x === 0 ? option.color2 : option.color1} />
+                        <Voxel key={`bulky-${x}-${y}`} position={[x, y, 0]} color={x === 0 ? color2 : color1} />
                     )
                 )}
                 {/* Thick back */}
                 {[-2, -1, 0, 1, 2].map(x =>
                     [0, 1, 2, 3].map(y =>
-                        <Voxel key={`back-${x}-${y}`} position={[x, y, -1]} color={option.color1} />
+                        <Voxel key={`back-${x}-${y}`} position={[x, y, -1]} color={color1} />
                     )
                 )}
                 {/* Bulky arms */}
-                <Voxel position={[-4, 3, 0]} color={option.color1} />
-                <Voxel position={[-4, 2, 0]} color={option.color1} />
-                <Voxel position={[-4, 1, 0]} color={option.color1} />
-                <Voxel position={[4, 3, 0]} color={option.color1} />
-                <Voxel position={[4, 2, 0]} color={option.color1} />
-                <Voxel position={[4, 1, 0]} color={option.color1} />
+                <Voxel position={[-4, 3, 0]} color={color1} />
+                <Voxel position={[-4, 2, 0]} color={color1} />
+                <Voxel position={[-4, 1, 0]} color={color1} />
+                <Voxel position={[4, 3, 0]} color={color1} />
+                <Voxel position={[4, 2, 0]} color={color1} />
+                <Voxel position={[4, 1, 0]} color={color1} />
                 {/* Shoulder pads */}
-                <Voxel position={[-3, 4, 0]} color={option.color2} />
-                <Voxel position={[3, 4, 0]} color={option.color2} />
+                <Voxel position={[-3, 4, 0]} color={color2} />
+                <Voxel position={[3, 4, 0]} color={color2} />
             </group>
         );
     }
@@ -287,26 +297,26 @@ const VoxelTorso = ({ config, torsoY }: { config: number; torsoY: number }) => {
         return (
             <group position={[0, torsoY, 0]}>
                 {/* Narrow body */}
-                <Voxel position={[-1, 0, 0]} color={option.color1} />
-                <Voxel position={[0, 0, 0]} color={option.color2} />
-                <Voxel position={[1, 0, 0]} color={option.color1} />
-                <Voxel position={[-1, 1, 0]} color={option.color1} />
-                <Voxel position={[0, 1, 0]} color={option.color2} />
-                <Voxel position={[1, 1, 0]} color={option.color1} />
-                <Voxel position={[-1, 2, 0]} color={option.color1} />
-                <Voxel position={[0, 2, 0]} color={option.color2} />
-                <Voxel position={[1, 2, 0]} color={option.color1} />
+                <Voxel position={[-1, 0, 0]} color={color1} />
+                <Voxel position={[0, 0, 0]} color={color2} />
+                <Voxel position={[1, 0, 0]} color={color1} />
+                <Voxel position={[-1, 1, 0]} color={color1} />
+                <Voxel position={[0, 1, 0]} color={color2} />
+                <Voxel position={[1, 1, 0]} color={color1} />
+                <Voxel position={[-1, 2, 0]} color={color1} />
+                <Voxel position={[0, 2, 0]} color={color2} />
+                <Voxel position={[1, 2, 0]} color={color1} />
                 {/* Slim arms */}
-                <Voxel position={[-2, 2, 0]} color={option.color1} />
-                <Voxel position={[2, 2, 0]} color={option.color1} />
-                <Voxel position={[-2, 1, 0]} color={option.color1} />
-                <Voxel position={[2, 1, 0]} color={option.color1} />
-                <Voxel position={[-2, 0, 0]} color={option.color1} />
-                <Voxel position={[2, 0, 0]} color={option.color1} />
+                <Voxel position={[-2, 2, 0]} color={color1} />
+                <Voxel position={[2, 2, 0]} color={color1} />
+                <Voxel position={[-2, 1, 0]} color={color1} />
+                <Voxel position={[2, 1, 0]} color={color1} />
+                <Voxel position={[-2, 0, 0]} color={color1} />
+                <Voxel position={[2, 0, 0]} color={color1} />
                 {/* Back */}
-                <Voxel position={[0, 0, -1]} color={option.color1} />
-                <Voxel position={[0, 1, -1]} color={option.color1} />
-                <Voxel position={[0, 2, -1]} color={option.color1} />
+                <Voxel position={[0, 0, -1]} color={color1} />
+                <Voxel position={[0, 1, -1]} color={color1} />
+                <Voxel position={[0, 2, -1]} color={color1} />
             </group>
         );
     }
@@ -315,66 +325,68 @@ const VoxelTorso = ({ config, torsoY }: { config: number; torsoY: number }) => {
     return (
         <group position={[0, torsoY, 0]}>
             {/* Core body */}
-            <Voxel position={[-2, 0, 0]} color={option.color1} />
-            <Voxel position={[-1, 0, 0]} color={option.color1} />
-            <Voxel position={[0, 0, 0]} color={option.color2} />
-            <Voxel position={[1, 0, 0]} color={option.color1} />
-            <Voxel position={[2, 0, 0]} color={option.color1} />
-            <Voxel position={[-2, 1, 0]} color={option.color1} />
-            <Voxel position={[-1, 1, 0]} color={option.color1} />
-            <Voxel position={[0, 1, 0]} color={option.color2} />
-            <Voxel position={[1, 1, 0]} color={option.color1} />
-            <Voxel position={[2, 1, 0]} color={option.color1} />
-            <Voxel position={[-2, 2, 0]} color={option.color1} />
-            <Voxel position={[-1, 2, 0]} color={option.color1} />
-            <Voxel position={[0, 2, 0]} color={option.color2} />
-            <Voxel position={[1, 2, 0]} color={option.color1} />
-            <Voxel position={[2, 2, 0]} color={option.color1} />
+            <Voxel position={[-2, 0, 0]} color={color1} />
+            <Voxel position={[-1, 0, 0]} color={color1} />
+            <Voxel position={[0, 0, 0]} color={color2} />
+            <Voxel position={[1, 0, 0]} color={color1} />
+            <Voxel position={[2, 0, 0]} color={color1} />
+            <Voxel position={[-2, 1, 0]} color={color1} />
+            <Voxel position={[-1, 1, 0]} color={color1} />
+            <Voxel position={[0, 1, 0]} color={color2} />
+            <Voxel position={[1, 1, 0]} color={color1} />
+            <Voxel position={[2, 1, 0]} color={color1} />
+            <Voxel position={[-2, 2, 0]} color={color1} />
+            <Voxel position={[-1, 2, 0]} color={color1} />
+            <Voxel position={[0, 2, 0]} color={color2} />
+            <Voxel position={[1, 2, 0]} color={color1} />
+            <Voxel position={[2, 2, 0]} color={color1} />
             {/* Armor plates (front) */}
-            <Voxel position={[-2, 1, 1]} color={option.color2} />
-            <Voxel position={[2, 1, 1]} color={option.color2} />
-            <Voxel position={[-1, 0, 1]} color={option.color2} />
-            <Voxel position={[1, 0, 1]} color={option.color2} />
+            <Voxel position={[-2, 1, 1]} color={color2} />
+            <Voxel position={[2, 1, 1]} color={color2} />
+            <Voxel position={[-1, 0, 1]} color={color2} />
+            <Voxel position={[1, 0, 1]} color={color2} />
             {/* Heavy shoulder armor */}
-            <Voxel position={[-3, 2, 0]} color={option.color2} />
-            <Voxel position={[-3, 3, 0]} color={option.color2} />
-            <Voxel position={[3, 2, 0]} color={option.color2} />
-            <Voxel position={[3, 3, 0]} color={option.color2} />
-            <Voxel position={[-3, 1, 0]} color={option.color1} />
-            <Voxel position={[3, 1, 0]} color={option.color1} />
+            <Voxel position={[-3, 2, 0]} color={color2} />
+            <Voxel position={[-3, 3, 0]} color={color2} />
+            <Voxel position={[3, 2, 0]} color={color2} />
+            <Voxel position={[3, 3, 0]} color={color2} />
+            <Voxel position={[-3, 1, 0]} color={color1} />
+            <Voxel position={[3, 1, 0]} color={color1} />
             {/* Back armor */}
-            <Voxel position={[-1, 0, -1]} color={option.color1} />
-            <Voxel position={[0, 0, -1]} color={option.color1} />
-            <Voxel position={[1, 0, -1]} color={option.color1} />
-            <Voxel position={[-1, 1, -1]} color={option.color1} />
-            <Voxel position={[0, 1, -1]} color={option.color1} />
-            <Voxel position={[1, 1, -1]} color={option.color1} />
-            <Voxel position={[-1, 2, -1]} color={option.color1} />
-            <Voxel position={[0, 2, -1]} color={option.color1} />
-            <Voxel position={[1, 2, -1]} color={option.color1} />
-            <Voxel position={[0, 2, -2]} color={option.color2} /> {/* Back plate */}
+            <Voxel position={[-1, 0, -1]} color={color1} />
+            <Voxel position={[0, 0, -1]} color={color1} />
+            <Voxel position={[1, 0, -1]} color={color1} />
+            <Voxel position={[-1, 1, -1]} color={color1} />
+            <Voxel position={[0, 1, -1]} color={color1} />
+            <Voxel position={[1, 1, -1]} color={color1} />
+            <Voxel position={[-1, 2, -1]} color={color1} />
+            <Voxel position={[0, 2, -1]} color={color1} />
+            <Voxel position={[1, 2, -1]} color={color1} />
+            <Voxel position={[0, 2, -2]} color={color2} /> {/* Back plate */}
         </group>
     );
 };
 
 // Legs component with different shapes
-const VoxelLegs = ({ config }: { config: number }) => {
+const VoxelLegs = ({ config, primaryColor, secondaryColor }: { config: number; primaryColor: string; secondaryColor: string }) => {
     const option = LEGS_OPTIONS[config];
+    const color1 = primaryColor;
+    const color2 = secondaryColor;
     
     // Standard legs
     if (option.shape === 'standard') {
         return (
             <group position={[0, 0, 0]}>
                 {/* Left leg */}
-                <Voxel position={[-1, 0, 0]} color={option.color2} />
-                <Voxel position={[-1, 1, 0]} color={option.color1} />
-                <Voxel position={[-1, 2, 0]} color={option.color1} />
-                <Voxel position={[-1, 3, 0]} color={option.color1} />
+                <Voxel position={[-1, 0, 0]} color={color2} />
+                <Voxel position={[-1, 1, 0]} color={color1} />
+                <Voxel position={[-1, 2, 0]} color={color1} />
+                <Voxel position={[-1, 3, 0]} color={color1} />
                 {/* Right leg */}
-                <Voxel position={[1, 0, 0]} color={option.color2} />
-                <Voxel position={[1, 1, 0]} color={option.color1} />
-                <Voxel position={[1, 2, 0]} color={option.color1} />
-                <Voxel position={[1, 3, 0]} color={option.color1} />
+                <Voxel position={[1, 0, 0]} color={color2} />
+                <Voxel position={[1, 1, 0]} color={color1} />
+                <Voxel position={[1, 2, 0]} color={color1} />
+                <Voxel position={[1, 3, 0]} color={color1} />
             </group>
         );
     }
@@ -384,29 +396,29 @@ const VoxelLegs = ({ config }: { config: number }) => {
         return (
             <group position={[0, 0, 0]}>
                 {/* Left leg - wide */}
-                <Voxel position={[-2, 0, 0]} color={option.color2} />
-                <Voxel position={[-1, 0, 0]} color={option.color2} />
-                <Voxel position={[-2, 1, 0]} color={option.color1} />
-                <Voxel position={[-1, 1, 0]} color={option.color1} />
-                <Voxel position={[-2, 2, 0]} color={option.color1} />
-                <Voxel position={[-1, 2, 0]} color={option.color1} />
-                <Voxel position={[-2, 3, 0]} color={option.color1} />
-                <Voxel position={[-1, 3, 0]} color={option.color1} />
+                <Voxel position={[-2, 0, 0]} color={color2} />
+                <Voxel position={[-1, 0, 0]} color={color2} />
+                <Voxel position={[-2, 1, 0]} color={color1} />
+                <Voxel position={[-1, 1, 0]} color={color1} />
+                <Voxel position={[-2, 2, 0]} color={color1} />
+                <Voxel position={[-1, 2, 0]} color={color1} />
+                <Voxel position={[-2, 3, 0]} color={color1} />
+                <Voxel position={[-1, 3, 0]} color={color1} />
                 {/* Back */}
-                <Voxel position={[-2, 1, -1]} color={option.color1} />
-                <Voxel position={[-2, 2, -1]} color={option.color1} />
+                <Voxel position={[-2, 1, -1]} color={color1} />
+                <Voxel position={[-2, 2, -1]} color={color1} />
                 {/* Right leg - wide */}
-                <Voxel position={[1, 0, 0]} color={option.color2} />
-                <Voxel position={[2, 0, 0]} color={option.color2} />
-                <Voxel position={[1, 1, 0]} color={option.color1} />
-                <Voxel position={[2, 1, 0]} color={option.color1} />
-                <Voxel position={[1, 2, 0]} color={option.color1} />
-                <Voxel position={[2, 2, 0]} color={option.color1} />
-                <Voxel position={[1, 3, 0]} color={option.color1} />
-                <Voxel position={[2, 3, 0]} color={option.color1} />
+                <Voxel position={[1, 0, 0]} color={color2} />
+                <Voxel position={[2, 0, 0]} color={color2} />
+                <Voxel position={[1, 1, 0]} color={color1} />
+                <Voxel position={[2, 1, 0]} color={color1} />
+                <Voxel position={[1, 2, 0]} color={color1} />
+                <Voxel position={[2, 2, 0]} color={color1} />
+                <Voxel position={[1, 3, 0]} color={color1} />
+                <Voxel position={[2, 3, 0]} color={color1} />
                 {/* Back */}
-                <Voxel position={[2, 1, -1]} color={option.color1} />
-                <Voxel position={[2, 2, -1]} color={option.color1} />
+                <Voxel position={[2, 1, -1]} color={color1} />
+                <Voxel position={[2, 2, -1]} color={color1} />
             </group>
         );
     }
@@ -416,17 +428,17 @@ const VoxelLegs = ({ config }: { config: number }) => {
         return (
             <group position={[0, 0, 0]}>
                 {/* Left leg - thin and longer */}
-                <Voxel position={[-1, 0, 0]} color={option.color2} />
-                <Voxel position={[-1, 1, 0]} color={option.color1} />
-                <Voxel position={[-1, 2, 0]} color={option.color1} />
-                <Voxel position={[-1, 3, 0]} color={option.color1} />
-                <Voxel position={[-1, 4, 0]} color={option.color1} />
+                <Voxel position={[-1, 0, 0]} color={color2} />
+                <Voxel position={[-1, 1, 0]} color={color1} />
+                <Voxel position={[-1, 2, 0]} color={color1} />
+                <Voxel position={[-1, 3, 0]} color={color1} />
+                <Voxel position={[-1, 4, 0]} color={color1} />
                 {/* Right leg - thin and longer */}
-                <Voxel position={[1, 0, 0]} color={option.color2} />
-                <Voxel position={[1, 1, 0]} color={option.color1} />
-                <Voxel position={[1, 2, 0]} color={option.color1} />
-                <Voxel position={[1, 3, 0]} color={option.color1} />
-                <Voxel position={[1, 4, 0]} color={option.color1} />
+                <Voxel position={[1, 0, 0]} color={color2} />
+                <Voxel position={[1, 1, 0]} color={color1} />
+                <Voxel position={[1, 2, 0]} color={color1} />
+                <Voxel position={[1, 3, 0]} color={color1} />
+                <Voxel position={[1, 4, 0]} color={color1} />
             </group>
         );
     }
@@ -435,23 +447,23 @@ const VoxelLegs = ({ config }: { config: number }) => {
     return (
         <group position={[0, 0, 0]}>
             {/* Left leg - mechanical */}
-            <Voxel position={[-1, 0, 0]} color={option.color2} />
-            <Voxel position={[-2, 0, 0]} color={option.color2} /> {/* Wide foot */}
-            <Voxel position={[-1, 1, 0]} color={option.color1} />
-            <Voxel position={[-1, 2, 0]} color={option.color2} /> {/* Joint */}
-            <Voxel position={[-1, 3, 0]} color={option.color1} />
+            <Voxel position={[-1, 0, 0]} color={color2} />
+            <Voxel position={[-2, 0, 0]} color={color2} /> {/* Wide foot */}
+            <Voxel position={[-1, 1, 0]} color={color1} />
+            <Voxel position={[-1, 2, 0]} color={color2} /> {/* Joint */}
+            <Voxel position={[-1, 3, 0]} color={color1} />
             {/* Pistons/details */}
-            <Voxel position={[-2, 1, 0]} color={option.color2} />
-            <Voxel position={[-2, 3, 0]} color={option.color2} />
+            <Voxel position={[-2, 1, 0]} color={color2} />
+            <Voxel position={[-2, 3, 0]} color={color2} />
             {/* Right leg - mechanical */}
-            <Voxel position={[1, 0, 0]} color={option.color2} />
-            <Voxel position={[2, 0, 0]} color={option.color2} /> {/* Wide foot */}
-            <Voxel position={[1, 1, 0]} color={option.color1} />
-            <Voxel position={[1, 2, 0]} color={option.color2} /> {/* Joint */}
-            <Voxel position={[1, 3, 0]} color={option.color1} />
+            <Voxel position={[1, 0, 0]} color={color2} />
+            <Voxel position={[2, 0, 0]} color={color2} /> {/* Wide foot */}
+            <Voxel position={[1, 1, 0]} color={color1} />
+            <Voxel position={[1, 2, 0]} color={color2} /> {/* Joint */}
+            <Voxel position={[1, 3, 0]} color={color1} />
             {/* Pistons/details */}
-            <Voxel position={[2, 1, 0]} color={option.color2} />
-            <Voxel position={[2, 3, 0]} color={option.color2} />
+            <Voxel position={[2, 1, 0]} color={color2} />
+            <Voxel position={[2, 3, 0]} color={color2} />
         </group>
     );
 };
@@ -624,13 +636,27 @@ export const VoxelCharacter = ({
     return (
         <group ref={groupRef} scale={scale}>
             {/* Legs at base */}
-            <VoxelLegs config={config.legsIndex} />
+            <VoxelLegs 
+                config={config.legsIndex} 
+                primaryColor={config.legsPrimaryColor}
+                secondaryColor={config.legsSecondaryColor}
+            />
             
             {/* Torso above legs */}
-            <VoxelTorso config={config.torsoIndex} torsoY={4} />
+            <VoxelTorso 
+                config={config.torsoIndex} 
+                torsoY={4}
+                primaryColor={config.torsoPrimaryColor}
+                secondaryColor={config.torsoSecondaryColor}
+            />
             
             {/* Head at top */}
-            <VoxelHead config={config.headIndex} headY={7} />
+            <VoxelHead 
+                config={config.headIndex} 
+                headY={7}
+                primaryColor={config.headPrimaryColor}
+                secondaryColor={config.headSecondaryColor}
+            />
             
             {/* Jetpack - always visible, flames bigger when flying */}
             <JetpackFlames isFlying={isFlying} />

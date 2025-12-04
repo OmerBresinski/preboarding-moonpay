@@ -82,12 +82,14 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
                         disabled={isCorrect}
                         style={{
                             ...styles.answerButton,
-                            backgroundColor: 
-                                isCorrect && index === question.correctIndex ? '#00AA00' :
-                                selectedIndex === index && isWrong ? '#AA0000' :
-                                selectedIndex === index ? '#5A00CC' : '#333',
+                            background: 
+                                isCorrect && index === question.correctIndex ? 'linear-gradient(135deg, #00AA00 0%, #00CC44 100%)' :
+                                selectedIndex === index && isWrong ? 'linear-gradient(135deg, #AA0000 0%, #CC2222 100%)' :
+                                selectedIndex === index ? 'linear-gradient(135deg, #7D00FF 0%, #9933FF 100%)' : 
+                                'rgba(255, 255, 255, 0.05)',
                             cursor: isCorrect ? 'default' : 'pointer',
-                            transform: selectedIndex === index && isWrong ? 'translateX(-2px)' : 'none'
+                            transform: selectedIndex === index && isWrong ? 'translateX(-2px)' : 'none',
+                            borderColor: selectedIndex === index ? 'rgba(125, 0, 255, 0.5)' : 'rgba(255, 255, 255, 0.1)'
                         }}
                     >
                         {option}
@@ -96,8 +98,8 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
             </div>
             
             {/* Feedback */}
-            {isWrong && <div style={styles.feedback}>❌ Try again!</div>}
-            {isCorrect && <div style={{ ...styles.feedback, color: '#00FF00' }}>✅ Correct!</div>}
+            {isWrong && <div style={{...styles.feedback, color: '#FF6666'}}>❌ Try again!</div>}
+            {isCorrect && <div style={{ ...styles.feedback, color: '#66FF66', borderColor: 'rgba(0, 200, 0, 0.3)' }}>✅ Correct!</div>}
             
             {/* Shake animation */}
             <style>{`
@@ -114,48 +116,55 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
 const styles: { [key: string]: React.CSSProperties } = {
     panel: {
         position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-        padding: '12px 20px',
-        borderTop: '3px solid #7D00FF',
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+        bottom: 20,
+        left: 20,
+        right: 20,
+        background: 'rgba(20, 10, 40, 0.9)',
+        backdropFilter: 'blur(20px)',
+        padding: '16px 24px',
+        borderRadius: 16,
+        border: '1px solid rgba(125, 0, 255, 0.3)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(125, 0, 255, 0.15)',
+        fontFamily: "'Plus Jakarta Sans', 'Segoe UI', sans-serif"
     },
     progressRow: {
         display: 'flex',
         alignItems: 'center',
         gap: 15,
-        marginBottom: 10
+        marginBottom: 12
     },
     locationLabel: {
         color: '#FFF',
         fontSize: 14,
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+        fontWeight: 500
     },
     progressBar: {
         flex: 1,
-        height: 8,
-        backgroundColor: '#333',
-        borderRadius: 4,
+        height: 6,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderRadius: 3,
         overflow: 'hidden'
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#7D00FF',
-        transition: 'width 0.5s ease-out'
+        background: 'linear-gradient(90deg, #7D00FF 0%, #A855F7 100%)',
+        transition: 'width 0.5s ease-out',
+        borderRadius: 3
     },
     progressText: {
-        color: '#888',
-        fontSize: 14
+        color: 'rgba(255, 255, 255, 0.6)',
+        fontSize: 13,
+        fontWeight: 500
     },
     questionRow: {
-        marginBottom: 10
+        marginBottom: 14
     },
     questionText: {
         color: '#FFF',
-        fontSize: 16,
-        fontWeight: 500
+        fontSize: 17,
+        fontWeight: 500,
+        lineHeight: 1.4
     },
     answersRow: {
         display: 'flex',
@@ -165,22 +174,26 @@ const styles: { [key: string]: React.CSSProperties } = {
     answerButton: {
         flex: '1 1 calc(25% - 10px)',
         minWidth: 120,
-        padding: '10px 15px',
+        padding: '12px 16px',
         fontSize: 14,
         color: '#FFF',
-        border: 'none',
-        borderRadius: 6,
-        transition: 'all 0.15s ease'
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: 10,
+        transition: 'all 0.15s ease',
+        fontWeight: 500
     },
     feedback: {
         position: 'absolute',
-        top: -30,
+        top: -40,
         left: '50%',
         transform: 'translateX(-50%)',
-        color: '#FF4444',
-        fontSize: 16,
-        fontWeight: 'bold',
-        textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+        padding: '8px 16px',
+        borderRadius: 8,
+        fontSize: 14,
+        fontWeight: 600,
+        background: 'rgba(20, 10, 40, 0.9)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 68, 68, 0.3)'
     }
 };
 
