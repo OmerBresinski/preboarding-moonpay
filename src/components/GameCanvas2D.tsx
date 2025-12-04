@@ -327,19 +327,22 @@ const GameCanvas2D = ({
                 // Draw character at current location (or during intro transition)
                 isAnimatingRef.current = false;
                 
+                // Idle hover animation - gentle bobbing up and down
+                const hoverOffset = Math.sin(time / 400) * 6;
+                
                 if (gameState.phase === 'character-creation') {
-                    // Character creation: draw character BIG and CENTERED
+                    // Character creation: draw character BIG and CENTERED with hover
                     const spriteSize = getSpriteSize(characterPreset, creationScale);
                     drawCharacterSprite(
                         ctx,
                         characterPreset,
                         width / 2 - spriteSize.width / 2,
-                        height / 2 - spriteSize.height / 2 + 20, // Slightly lower to account for UI above
+                        height / 2 - spriteSize.height / 2 + 20 + hoverOffset,
                         creationScale,
                         false,
                         false,
                         time,
-                        true // Show jetpack (without flames)
+                        true // Show jetpack
                     );
                 } else if (introTransitionRef.current.active) {
                     // Intro transition: animate from center big to first location small
@@ -357,9 +360,9 @@ const GameCanvas2D = ({
                     const endSpriteSize = getSpriteSize(characterPreset, gameScale);
                     const endPos = getCharacterPositionAtLocation(firstLoc, endSpriteSize, baseScale);
                     
-                    // Interpolate position
+                    // Interpolate position with decreasing hover effect
                     const currentX = startX + (endPos.x - startX) * easedIntro;
-                    const currentY = startY + (endPos.y - startY) * easedIntro;
+                    const currentY = startY + (endPos.y - startY) * easedIntro + hoverOffset * (1 - easedIntro);
                     
                     drawCharacterSprite(
                         ctx,
@@ -373,7 +376,7 @@ const GameCanvas2D = ({
                         true
                     );
                 } else {
-                    // Normal idle state at current location
+                    // Normal idle state at current location with hover animation
                     const currentLoc = locations[gameState.currentLocationIndex];
                     const spriteSize = getSpriteSize(characterPreset, gameScale);
                     const charPos = getCharacterPositionAtLocation(currentLoc, spriteSize, baseScale);
@@ -382,12 +385,12 @@ const GameCanvas2D = ({
                         ctx,
                         characterPreset,
                         charPos.x,
-                        charPos.y,
+                        charPos.y + hoverOffset, // Apply hover bobbing
                         gameScale,
                         false,
                         false,
                         time,
-                        true // Show jetpack (without flames)
+                        true // Show jetpack
                     );
                 }
             }
