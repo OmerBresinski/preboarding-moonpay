@@ -318,6 +318,7 @@ const SceneContent = ({
     const [showSpace, setShowSpace] = useState(inSpace);
     const [showTerrain, setShowTerrain] = useState(!inSpace);
     const lastShowSpaceRef = useRef(inSpace);
+    const lastShowTerrainRef = useRef(!inSpace);
     
     // Use R3F's useFrame for smooth animation
     useFrame((state) => {
@@ -360,9 +361,15 @@ const SceneContent = ({
         const shouldShowSpace = inSpace || (isFlying && transitionProgress > 0.5 && isSpaceLandmark(LANDMARKS[gameState.currentLandmarkIndex]));
         const shouldShowTerrain = !shouldShowSpace || (isFlying && transitionProgress < 0.7);
         
+        // Update space visibility when it changes
         if (shouldShowSpace !== lastShowSpaceRef.current) {
             lastShowSpaceRef.current = shouldShowSpace;
             setShowSpace(shouldShowSpace);
+        }
+        
+        // Update terrain visibility when it changes (tracked separately)
+        if (shouldShowTerrain !== lastShowTerrainRef.current) {
+            lastShowTerrainRef.current = shouldShowTerrain;
             setShowTerrain(shouldShowTerrain);
         }
         
@@ -611,9 +618,10 @@ const Game3D = () => {
     }, []);
     
     // Callback when transition animation completes (called from useFrame)
+    // Note: We don't reset transitionProgressRef here - it stays at 1 until next transition starts
+    // This prevents a flicker where progress resets to 0 before isFlying state updates
     const handleTransitionComplete = useCallback(() => {
         setIsFlying(false);
-        transitionProgressRef.current = 0;
     }, []);
     
     // Handle correct answer
