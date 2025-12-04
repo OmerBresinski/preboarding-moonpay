@@ -56,7 +56,11 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
     return (
         <div style={{
             ...styles.panel,
-            animation: isWrong ? 'shake 0.4s ease-in-out' : undefined
+            borderColor: isWrong ? 'rgba(255, 80, 80, 0.6)' : 'rgba(125, 0, 255, 0.3)',
+            boxShadow: isWrong 
+                ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 80, 80, 0.3)' 
+                : '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(125, 0, 255, 0.15)',
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
         }}>
             {/* Progress Bar */}
             <div style={styles.progressRow}>
@@ -74,39 +78,48 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
             
             {/* Answer Buttons */}
             <div style={styles.answersRow}>
-                {question.options.map((option, index) => (
-                    <button
-                        key={`${question.id}-${index}`}
-                        type="button"
-                        onClick={() => handleAnswer(index)}
-                        disabled={isCorrect}
-                        style={{
-                            ...styles.answerButton,
-                            background: 
-                                isCorrect && index === question.correctIndex ? 'linear-gradient(135deg, #00AA00 0%, #00CC44 100%)' :
-                                selectedIndex === index && isWrong ? 'linear-gradient(135deg, #AA0000 0%, #CC2222 100%)' :
-                                selectedIndex === index ? 'linear-gradient(135deg, #7D00FF 0%, #9933FF 100%)' : 
-                                'rgba(255, 255, 255, 0.05)',
-                            cursor: isCorrect ? 'default' : 'pointer',
-                            transform: selectedIndex === index && isWrong ? 'translateX(-2px)' : 'none',
-                            borderColor: selectedIndex === index ? 'rgba(125, 0, 255, 0.5)' : 'rgba(255, 255, 255, 0.1)'
-                        }}
-                    >
-                        {option}
-                    </button>
-                ))}
+                {question.options.map((option, index) => {
+                    const isSelectedWrong = selectedIndex === index && isWrong;
+                    const isCorrectAnswer = isCorrect && index === question.correctIndex;
+                    
+                    return (
+                        <button
+                            key={`${question.id}-${index}`}
+                            type="button"
+                            onClick={() => handleAnswer(index)}
+                            disabled={isCorrect}
+                            style={{
+                                ...styles.answerButton,
+                                background: 
+                                    isCorrectAnswer ? 'linear-gradient(135deg, #00AA00 0%, #00CC44 100%)' :
+                                    isSelectedWrong ? 'linear-gradient(135deg, #AA0000 0%, #CC2222 100%)' :
+                                    selectedIndex === index ? 'linear-gradient(135deg, #7D00FF 0%, #9933FF 100%)' : 
+                                    'rgba(255, 255, 255, 0.05)',
+                                cursor: isCorrect ? 'default' : 'pointer',
+                                borderColor: 
+                                    isSelectedWrong ? 'rgba(255, 80, 80, 0.6)' :
+                                    selectedIndex === index ? 'rgba(125, 0, 255, 0.5)' : 
+                                    'rgba(255, 255, 255, 0.1)',
+                                animation: isSelectedWrong ? 'buttonShake 0.3s ease-in-out' : undefined
+                            }}
+                        >
+                            {option}
+                        </button>
+                    );
+                })}
             </div>
             
             {/* Feedback */}
             {isWrong && <div style={{...styles.feedback, color: '#FF6666'}}>❌ Try again!</div>}
             {isCorrect && <div style={{ ...styles.feedback, color: '#66FF66', borderColor: 'rgba(0, 200, 0, 0.3)' }}>✅ Correct! Flying to next destination...</div>}
             
-            {/* Shake animation */}
+            {/* Button shake animation - only moves the wrong button slightly */}
             <style>{`
-                @keyframes shake {
+                @keyframes buttonShake {
                     0%, 100% { transform: translateX(0); }
-                    20%, 60% { transform: translateX(-3px); }
-                    40%, 80% { transform: translateX(3px); }
+                    25% { transform: translateX(-3px); }
+                    50% { transform: translateX(3px); }
+                    75% { transform: translateX(-2px); }
                 }
             `}</style>
         </div>
