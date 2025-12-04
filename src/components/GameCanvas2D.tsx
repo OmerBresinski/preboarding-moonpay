@@ -40,6 +40,14 @@ const GameCanvas2D = ({
     const trailPositionsRef = useRef<{ x: number; y: number }[]>([]);
     const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
     const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+    
+    // Track intro transition (from character creation to game)
+    const introTransitionRef = useRef<{ active: boolean; startTime: number; fromPhase: string }>({ 
+        active: false, 
+        startTime: 0,
+        fromPhase: 'character-creation'
+    });
+    const lastPhaseRef = useRef(gameState.phase);
 
     // Get canvas positions for all locations based on canvas size
     const getLocationCanvasPositions = useCallback((width: number, height: number) => {
@@ -52,6 +60,20 @@ const GameCanvas2D = ({
                 moonbase
             };
         });
+    }, []);
+
+    // Calculate character position for a given location (consistent positioning)
+    const getCharacterPositionAtLocation = useCallback((
+        loc: { x: number; y: number; moonbase: MoonBaseInfo },
+        spriteSize: { width: number; height: number },
+        baseScale: number
+    ) => {
+        const mapScale = baseScale * loc.moonbase.mapScale;
+        const mapHeight = 100 * mapScale;
+        return {
+            x: loc.x - spriteSize.width / 2,
+            y: loc.y - mapHeight / 2 - spriteSize.height - 15
+        };
     }, []);
 
     // Initialize stars on mount and resize
@@ -83,6 +105,7 @@ const GameCanvas2D = ({
 
         let lastTime = 0;
         const TRANSITION_DURATION = 2000; // 2 seconds for horizontal travel
+        const INTRO_TRANSITION_DURATION = 1200; // 1.2 seconds for intro zoom
 
         const render = (time: number) => {
             const deltaTime = time - lastTime;
@@ -93,6 +116,12 @@ const GameCanvas2D = ({
                 animationRef.current = requestAnimationFrame(render);
                 return;
             }
+
+            // Detect phase change from character-creation to trivia
+            if (lastPhaseRef.current === 'character-creation' && gameState.phase === 'trivia') {
+                introTransitionRef.current = { active: true, startTime: time, fromPhase: 'character-creation' };
+            }
+            lastPhaseRef.current = gameState.phase;
 
             // Clear canvas
             ctx.clearRect(0, 0, width, height);
@@ -105,17 +134,40 @@ const GameCanvas2D = ({
             
             // Calculate base scale based on canvas size
             const baseScale = Math.min(width / 1920, height / 1080) * 0.8;
+            const gameScale = Math.max(3, Math.floor(baseScale * 4));
             
-            // Only draw locations and progress path when NOT in character creation
+            // Character creation large scale
+            const creationScale = Math.max(8, Math.floor(baseScale * 12));
+            
+            // Calculate intro transition progress
+            let introProgress = 1;
+            if (introTransitionRef.current.active) {
+                const elapsed = time - introTransitionRef.current.startTime;
+                introProgress = Math.min(elapsed / INTRO_TRANSITION_DURATION, 1);
+                if (introProgress >= 1) {
+                    introTransitionRef.current.active = false;
+                }
+            }
+            
+            // Only draw locations and progress path when NOT in character creation (or during intro transition)
             if (gameState.phase !== 'character-creation') {
+                // Fade in locations during intro transition
+                if (introTransitionRef.current.active) {
+                    ctx.globalAlpha = easing.easeOut(introProgress);
+                }
+                
+                // When flying, use previousLocationIndex for the progress path to avoid showing ahead
+                const progressIndex = isFlying ? previousLocationIndex : gameState.currentLocationIndex;
+                
                 // Draw progress path connecting all locations (horizontal line)
                 const pathPoints = locations.map(loc => ({ x: loc.x, y: loc.y }));
-                drawProgressPath(ctx, pathPoints, gameState.currentLocationIndex, transitionProgressRef.current);
+                drawProgressPath(ctx, pathPoints, progressIndex, isFlying ? transitionProgressRef.current : 0);
                 
                 // Draw all locations
                 locations.forEach((loc, index) => {
-                    const isActive = index === gameState.currentLocationIndex;
-                    const isCompleted = index < gameState.currentLocationIndex;
+                    // When flying, the "active" location is where we're coming FROM
+                    const isActive = isFlying ? index === previousLocationIndex : index === gameState.currentLocationIndex;
+                    const isCompleted = index < (isFlying ? previousLocationIndex : gameState.currentLocationIndex);
                     const isHovered = hoveredLocation === loc.id;
                     
                     // Use the moonbase's own scale multiplied by base scale
@@ -145,10 +197,12 @@ const GameCanvas2D = ({
                     const labelY = loc.y + mapHeight / 2 + 30;
                     drawOfficeLabel(ctx, loc.moonbase, loc.x, labelY, isHovered);
                 });
+                
+                ctx.globalAlpha = 1;
             }
             
             // Handle flying animation
-            if (isFlying) {
+            if (isFlying && gameState.phase !== 'character-creation') {
                 if (!isAnimatingRef.current) {
                     isAnimatingRef.current = true;
                     startTimeRef.current = time;
@@ -164,21 +218,30 @@ const GameCanvas2D = ({
                 const startLoc = locations[previousLocationIndex];
                 const endLoc = locations[gameState.currentLocationIndex];
                 
-                // Calculate arc height - smaller for horizontal movement
-                const arcHeight = Math.min(height * 0.15, 120);
+                // Get character positions at start and end (using consistent positioning)
+                const spriteSize = getSpriteSize(characterPreset, gameScale);
+                const startCharPos = getCharacterPositionAtLocation(startLoc, spriteSize, baseScale);
+                const endCharPos = getCharacterPositionAtLocation(endLoc, spriteSize, baseScale);
                 
-                // Get current position along the arc
+                // Calculate arc height - smaller for horizontal movement
+                const arcHeight = Math.min(height * 0.12, 100);
+                
+                // Get current position along the arc (using consistent Y positioning)
                 const charPos = calculateJumpArcPosition(
-                    startLoc.x,
-                    startLoc.y,
-                    endLoc.x,
-                    endLoc.y,
+                    startCharPos.x + spriteSize.width / 2,
+                    startCharPos.y + spriteSize.height,
+                    endCharPos.x + spriteSize.width / 2,
+                    endCharPos.y + spriteSize.height,
                     easedProgress,
                     arcHeight
                 );
                 
+                // Adjust for sprite anchor
+                const drawX = charPos.x - spriteSize.width / 2;
+                const drawY = charPos.y - spriteSize.height;
+                
                 // Add to trail
-                trailPositionsRef.current.push({ ...charPos });
+                trailPositionsRef.current.push({ x: charPos.x, y: charPos.y });
                 if (trailPositionsRef.current.length > 20) {
                     trailPositionsRef.current.shift();
                 }
@@ -186,16 +249,17 @@ const GameCanvas2D = ({
                 // Draw trail
                 drawJumpTrail(ctx, trailPositionsRef.current, 20);
                 
-                // Draw character at current position
-                const spriteScale = Math.max(3, Math.floor(baseScale * 4));
-                const spriteSize = getSpriteSize(characterPreset, spriteScale);
+                // Draw character at current position with jetpack flames
                 drawCharacterSprite(
                     ctx,
                     characterPreset,
-                    charPos.x - spriteSize.width / 2,
-                    charPos.y - spriteSize.height,
-                    spriteScale,
-                    endLoc.x < startLoc.x // Flip if moving left
+                    drawX,
+                    drawY,
+                    gameScale,
+                    endLoc.x < startLoc.x, // Flip if moving left
+                    true, // isFlying - show jetpack flames
+                    time,
+                    true // showJetpack
                 );
                 
                 // Check if animation complete
@@ -205,35 +269,71 @@ const GameCanvas2D = ({
                     onTransitionComplete();
                 }
             } else {
-                // Draw character at current location
+                // Draw character at current location (or during intro transition)
                 isAnimatingRef.current = false;
-                const currentLoc = locations[gameState.currentLocationIndex];
                 
-                if (gameState.phase !== 'character-creation') {
-                    const spriteScale = Math.max(3, Math.floor(baseScale * 4));
-                    const spriteSize = getSpriteSize(characterPreset, spriteScale);
+                if (gameState.phase === 'character-creation') {
+                    // Character creation: draw character BIG and CENTERED
+                    const spriteSize = getSpriteSize(characterPreset, creationScale);
+                    drawCharacterSprite(
+                        ctx,
+                        characterPreset,
+                        width / 2 - spriteSize.width / 2,
+                        height / 2 - spriteSize.height / 2 + 20, // Slightly lower to account for UI above
+                        creationScale,
+                        false,
+                        false,
+                        time,
+                        true // Show jetpack (without flames)
+                    );
+                } else if (introTransitionRef.current.active) {
+                    // Intro transition: animate from center big to first location small
+                    const easedIntro = easing.easeInOut(introProgress);
                     
-                    // Position character above the current location
-                    const mapScale = baseScale * currentLoc.moonbase.mapScale;
-                    const mapHeight = 100 * mapScale;
+                    // Calculate interpolated scale
+                    const currentScale = Math.round(creationScale + (gameScale - creationScale) * easedIntro);
+                    const spriteSize = getSpriteSize(characterPreset, currentScale);
+                    
+                    // Start position (center, big)
+                    const startX = width / 2 - getSpriteSize(characterPreset, creationScale).width / 2;
+                    const startY = height / 2 - getSpriteSize(characterPreset, creationScale).height / 2 + 20;
+                    
+                    // End position (first location)
+                    const firstLoc = locations[0];
+                    const endSpriteSize = getSpriteSize(characterPreset, gameScale);
+                    const endPos = getCharacterPositionAtLocation(firstLoc, endSpriteSize, baseScale);
+                    
+                    // Interpolate position
+                    const currentX = startX + (endPos.x - startX) * easedIntro;
+                    const currentY = startY + (endPos.y - startY) * easedIntro;
                     
                     drawCharacterSprite(
                         ctx,
                         characterPreset,
-                        currentLoc.x - spriteSize.width / 2,
-                        currentLoc.y - mapHeight / 2 - spriteSize.height - 10,
-                        spriteScale
+                        currentX,
+                        currentY,
+                        currentScale,
+                        false,
+                        false,
+                        time,
+                        true
                     );
                 } else {
-                    // Character creation: draw character in center-left area
-                    const spriteScale = 6;
-                    const spriteSize = getSpriteSize(characterPreset, spriteScale);
+                    // Normal idle state at current location
+                    const currentLoc = locations[gameState.currentLocationIndex];
+                    const spriteSize = getSpriteSize(characterPreset, gameScale);
+                    const charPos = getCharacterPositionAtLocation(currentLoc, spriteSize, baseScale);
+                    
                     drawCharacterSprite(
                         ctx,
                         characterPreset,
-                        width * 0.35 - spriteSize.width / 2,
-                        height * 0.5 - spriteSize.height / 2,
-                        spriteScale
+                        charPos.x,
+                        charPos.y,
+                        gameScale,
+                        false,
+                        false,
+                        time,
+                        true // Show jetpack (without flames)
                     );
                 }
             }
@@ -256,6 +356,7 @@ const GameCanvas2D = ({
         previousLocationIndex,
         hoveredLocation,
         getLocationCanvasPositions,
+        getCharacterPositionAtLocation,
         onTransitionComplete,
         transitionProgressRef
     ]);
@@ -275,7 +376,7 @@ const GameCanvas2D = ({
         let foundHover = false;
         for (const loc of locations) {
             const dist = Math.sqrt((x - loc.x) ** 2 + (y - loc.y) ** 2);
-            if (dist < 80) {  // Increased hover radius for larger maps
+            if (dist < 80) {
                 setHoveredLocation(loc.id);
                 foundHover = true;
                 break;

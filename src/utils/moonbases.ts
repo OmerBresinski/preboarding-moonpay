@@ -36,7 +36,7 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         country: 'United Kingdom',
         officeName: 'MoonPay HQ',
         funFact: 'Our London office is where it all started! Founded in 2019, MoonPay now serves over 15 million customers worldwide.',
-        canvasPosition: { x: 0.08, y: 0.5 },
+        canvasPosition: { x: 0.18, y: 0.5 },
         mapScale: 1.8,
         // Realistic UK silhouette - Great Britain + Northern Ireland
         countryPath: `
@@ -58,7 +58,7 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         country: 'Netherlands',
         officeName: 'MoonPay Amsterdam',
         funFact: 'The Netherlands is a hub for European fintech! Our Amsterdam team brings Dutch innovation to crypto accessibility.',
-        canvasPosition: { x: 0.24, y: 0.5 },
+        canvasPosition: { x: 0.32, y: 0.5 },
         mapScale: 2.2,
         // Netherlands silhouette - distinctive shape with Frisian Islands
         countryPath: `
@@ -77,7 +77,7 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         country: 'Spain',
         officeName: 'MoonPay Barcelona',
         funFact: 'Barcelona combines Mediterranean culture with tech innovation. Our team here loves the beach and blockchain equally!',
-        canvasPosition: { x: 0.40, y: 0.5 },
+        canvasPosition: { x: 0.46, y: 0.5 },
         mapScale: 1.2,
         // Spain silhouette - Iberian peninsula shape with Portugal indent
         countryPath: `
@@ -96,7 +96,7 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         country: 'Ireland',
         officeName: 'MoonPay Dublin',
         funFact: 'Ireland\'s tech scene is legendary! Dublin is home to many of the world\'s leading tech companies, and now MoonPay too.',
-        canvasPosition: { x: 0.56, y: 0.5 },
+        canvasPosition: { x: 0.60, y: 0.5 },
         mapScale: 2.0,
         // Ireland silhouette - distinctive west coast inlets
         countryPath: `
@@ -114,7 +114,7 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         country: 'United States',
         officeName: 'MoonPay NYC',
         funFact: 'The city that never sleeps! Our New York office operates in the heart of the global financial capital.',
-        canvasPosition: { x: 0.72, y: 0.5 },
+        canvasPosition: { x: 0.74, y: 0.5 },
         mapScale: 0.8,
         // USA silhouette - continental US shape
         countryPath: `

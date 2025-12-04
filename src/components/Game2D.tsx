@@ -358,8 +358,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(125, 0, 255, 0.3)',
         borderRadius: 16,
-        padding: '20px',
-        minWidth: 280,
+        padding: '16px',
+        minWidth: 340,
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(125, 0, 255, 0.15)'
     },
     presetTitle: {
@@ -372,16 +372,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     presetGrid: {
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 8
+        gridTemplateColumns: 'repeat(5, 1fr)',
+        gap: 6,
+        maxWidth: 320
     },
     presetButton: {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: 8,
+        padding: 6,
         border: '2px solid',
-        borderRadius: 12,
+        borderRadius: 10,
         cursor: 'pointer',
         transition: 'all 0.2s ease'
     },
