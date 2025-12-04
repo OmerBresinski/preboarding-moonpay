@@ -2,16 +2,13 @@ import { useState, useCallback, useRef } from 'react';
 import type { GameState } from '../utils/gameState';
 import { 
     createInitialGameState, 
-    getCurrentLocation, 
     advanceToNextLocation, 
     startGame,
-    MOONBASE_ORDER,
-    MOONBASE_NAMES
+    MOONBASE_ORDER
 } from '../utils/gameState';
 import type { TriviaQuestion } from '../utils/triviaQuestions';
 import { getRandomQuestion } from '../utils/triviaQuestions';
 import { CHARACTER_PRESETS, type CharacterPreset } from '../utils/characterSprites';
-import { MOONBASE_DATA } from '../utils/moonbases';
 import GameCanvas2D from './GameCanvas2D';
 import ProgressSidebar from './ProgressSidebar';
 import QuestionPanel from './QuestionPanel';
@@ -28,6 +25,10 @@ const Game2D = () => {
     const [previousLocationIndex, setPreviousLocationIndex] = useState(0);
     const [selectedPreset, setSelectedPreset] = useState<CharacterPreset>(CHARACTER_PRESETS[0]);
     const [showVictoryScreen, setShowVictoryScreen] = useState<1 | 2 | null>(null);
+    const [moonRevealed, setMoonRevealed] = useState(false);
+    
+    // NYC index - moon reveals when we arrive here
+    const NYC_INDEX = 4;
     
     // Animation progress ref
     const transitionProgressRef = useRef<number>(0);
@@ -43,11 +44,16 @@ const Game2D = () => {
         setIsFlying(false);
         transitionProgressRef.current = 0;
         
+        // Reveal moon when we arrive at NYC
+        if (gameState.currentLocationIndex >= NYC_INDEX && !moonRevealed) {
+            setMoonRevealed(true);
+        }
+        
         // Check if we reached the moon
         if (gameState.phase === 'victory') {
             setShowVictoryScreen(1);
         }
-    }, [gameState.phase]);
+    }, [gameState.phase, gameState.currentLocationIndex, moonRevealed]);
     
     // Handle correct answer
     const handleAnswer = useCallback((isCorrect: boolean) => {
@@ -100,8 +106,8 @@ const Game2D = () => {
         }
     }, [showVictoryScreen]);
 
-    const currentLocation = getCurrentLocation(gameState);
-    const currentMoonbase = MOONBASE_DATA[currentLocation];
+    // Get current location for display
+    const currentLocation = MOONBASE_ORDER[gameState.currentLocationIndex];
 
     return (
         <div style={styles.container}>
@@ -120,6 +126,7 @@ const Game2D = () => {
                 <ProgressSidebar
                     currentIndex={gameState.currentLocationIndex}
                     isFlying={isFlying}
+                    moonRevealed={moonRevealed}
                 />
             )}
             
@@ -217,8 +224,8 @@ const Game2D = () => {
                         <p style={styles.perksSubtitle}>Here's what awaits you at MoonPay</p>
                         
                         <div style={styles.perksGrid}>
-                            {PERKS.map((perk, index) => (
-                                <div key={index} style={styles.perkCard}>
+                            {PERKS.map((perk) => (
+                                <div key={perk.id} style={styles.perkCard}>
                                     <span style={styles.perkIcon}>{perk.icon}</span>
                                     <h3 style={styles.perkTitle}>{perk.title}</h3>
                                     <p style={styles.perkDescription}>{perk.description}</p>
@@ -288,15 +295,15 @@ const CharacterPreview = ({ preset }: { preset: CharacterPreset }) => {
 
 // Perks data
 const PERKS = [
-    { icon: '🏥', title: 'Health Insurance', description: 'Comprehensive medical, dental, and vision coverage' },
-    { icon: '📈', title: 'Equity Bonus', description: 'Eligibility for equity bonus as part of compensation' },
-    { icon: '✈️', title: 'Team Offsites', description: 'Quarterly team gatherings in exciting locations' },
-    { icon: '👕', title: 'MoonPay Swag', description: 'Welcome kit with exclusive MoonPay merchandise' },
-    { icon: '💰', title: 'Wallet Allowance', description: 'Monthly MoonPay wallet allowance for crypto' },
-    { icon: '🖥️', title: 'Home Office', description: 'Equipment budget for your home workspace' },
-    { icon: '📚', title: 'L&D Budget', description: 'Learning & Development budget for growth' },
-    { icon: '🏦', title: 'Pension Schemes', description: 'Competitive pension/retirement contributions' },
-    { icon: '🍽️', title: 'On-site Lunches', description: 'Free lunches at all MoonBase locations' },
+    { id: 'health', icon: '🏥', title: 'Health Insurance', description: 'Comprehensive medical, dental, and vision coverage' },
+    { id: 'equity', icon: '📈', title: 'Equity Bonus', description: 'Eligibility for equity bonus as part of compensation' },
+    { id: 'offsites', icon: '✈️', title: 'Team Offsites', description: 'Quarterly team gatherings in exciting locations' },
+    { id: 'swag', icon: '👕', title: 'MoonPay Swag', description: 'Welcome kit with exclusive MoonPay merchandise' },
+    { id: 'wallet', icon: '💰', title: 'Wallet Allowance', description: 'Monthly MoonPay wallet allowance for crypto' },
+    { id: 'office', icon: '🖥️', title: 'Home Office', description: 'Equipment budget for your home workspace' },
+    { id: 'ld', icon: '📚', title: 'L&D Budget', description: 'Learning & Development budget for growth' },
+    { id: 'pension', icon: '🏦', title: 'Pension Schemes', description: 'Competitive pension/retirement contributions' },
+    { id: 'lunches', icon: '🍽️', title: 'On-site Lunches', description: 'Free lunches at all MoonBase locations' },
 ];
 
 const FONT_FAMILY = "'Space Grotesk', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";

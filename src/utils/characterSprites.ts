@@ -381,7 +381,7 @@ export const drawCharacterSprite = (
     y: number,
     scale: number = 3,
     flipX: boolean = false,
-    isFlying: boolean = false,
+    _isFlying: boolean = false, // Kept for API compatibility, flames always on now
     time: number = 0,
     showJetpack: boolean = true
 ): void => {
@@ -399,7 +399,7 @@ export const drawCharacterSprite = (
     
     // Draw jetpack BEHIND the character (drawn first so character overlaps)
     if (showJetpack) {
-        drawJetpack(ctx, x, y, pixelSize, spriteData[0].length, spriteData.length, palette[1], time, isFlying);
+        drawJetpack(ctx, x, y, pixelSize, spriteData[0].length, palette[1], time);
     }
     
     // Draw character sprite
@@ -431,106 +431,140 @@ const drawJetpack = (
     y: number,
     pixelSize: number,
     spriteWidth: number,
-    spriteHeight: number,
     primaryColor: string,
-    time: number,
-    isFlying: boolean
+    time: number
 ): void => {
-    // Jetpack position - centered on the character's back (slightly offset to look like it's behind)
-    const jetpackWidth = pixelSize * 4;
+    // Jetpack position - centered on the character's back, LARGER size
+    const jetpackWidth = pixelSize * 6;
     const jetpackX = x + (spriteWidth * pixelSize - jetpackWidth) / 2;
-    const jetpackY = y + 8 * pixelSize;
+    const jetpackY = y + 7 * pixelSize;
     
-    // Jetpack body (dark metal)
+    // Jetpack body (dark metal) - taller
     ctx.fillStyle = '#3a3a3a';
-    ctx.fillRect(jetpackX, jetpackY, jetpackWidth, pixelSize * 7);
+    ctx.fillRect(jetpackX, jetpackY, jetpackWidth, pixelSize * 9);
     
     // Jetpack top cap
     ctx.fillStyle = '#4a4a4a';
-    ctx.fillRect(jetpackX + pixelSize * 0.5, jetpackY - pixelSize, jetpackWidth - pixelSize, pixelSize);
+    ctx.fillRect(jetpackX + pixelSize * 0.5, jetpackY - pixelSize * 1.5, jetpackWidth - pixelSize, pixelSize * 1.5);
     
-    // Jetpack tanks (left and right)
+    // Jetpack tanks (left and right) - bigger tanks
     ctx.fillStyle = '#2a2a2a';
-    ctx.fillRect(jetpackX, jetpackY + pixelSize, pixelSize, pixelSize * 5);
-    ctx.fillRect(jetpackX + jetpackWidth - pixelSize, jetpackY + pixelSize, pixelSize, pixelSize * 5);
+    ctx.fillRect(jetpackX - pixelSize * 0.5, jetpackY + pixelSize, pixelSize * 1.5, pixelSize * 7);
+    ctx.fillRect(jetpackX + jetpackWidth - pixelSize, jetpackY + pixelSize, pixelSize * 1.5, pixelSize * 7);
     
-    // Jetpack accent stripe (character's color)
+    // Jetpack accent stripe (character's color) - bigger
     ctx.fillStyle = primaryColor;
-    ctx.fillRect(jetpackX + pixelSize, jetpackY + pixelSize * 2, jetpackWidth - pixelSize * 2, pixelSize * 3);
+    ctx.fillRect(jetpackX + pixelSize * 1.5, jetpackY + pixelSize * 2, jetpackWidth - pixelSize * 3, pixelSize * 4);
     
-    // Thruster nozzles at bottom
-    ctx.fillStyle = '#222222';
-    ctx.fillRect(jetpackX + pixelSize * 0.5, jetpackY + pixelSize * 7, pixelSize * 1.2, pixelSize);
-    ctx.fillRect(jetpackX + jetpackWidth - pixelSize * 1.7, jetpackY + pixelSize * 7, pixelSize * 1.2, pixelSize);
+    // Secondary accent
+    ctx.fillStyle = '#5a5a5a';
+    ctx.fillRect(jetpackX + pixelSize * 2, jetpackY + pixelSize * 6, jetpackWidth - pixelSize * 4, pixelSize * 2);
     
-    // Only draw flames when flying
-    if (isFlying) {
-        const flamePhase = (time / 50) % 1;
-        const flameHeight1 = 4 + Math.sin(flamePhase * Math.PI * 2) * 2;
-        const flameHeight2 = 4 + Math.sin((flamePhase + 0.5) * Math.PI * 2) * 2;
+    // Thruster nozzles at bottom - bigger
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(jetpackX + pixelSize * 0.5, jetpackY + pixelSize * 9, pixelSize * 2, pixelSize * 1.5);
+    ctx.fillRect(jetpackX + jetpackWidth - pixelSize * 2.5, jetpackY + pixelSize * 9, pixelSize * 2, pixelSize * 1.5);
+    
+    // ALWAYS draw flames (always active)
+    const flamePhase = (time / 40) % 1;
+    const flameHeight1 = 8 + Math.sin(flamePhase * Math.PI * 2) * 4;
+    const flameHeight2 = 8 + Math.sin((flamePhase + 0.5) * Math.PI * 2) * 4;
+    const flameHeight3 = 7 + Math.sin((flamePhase + 0.25) * Math.PI * 2) * 3;
+    
+    const flameY = jetpackY + pixelSize * 10.5;
+    const leftFlameX = jetpackX + pixelSize * 1.5;
+    const rightFlameX = jetpackX + jetpackWidth - pixelSize * 1.5;
+    const centerFlameX = jetpackX + jetpackWidth / 2;
+    
+    // Outer flames (orange/red) - MUCH LARGER
+    ctx.fillStyle = '#FF4500';
+    
+    // Left flame
+    ctx.beginPath();
+    ctx.moveTo(leftFlameX - pixelSize * 1.2, flameY);
+    ctx.lineTo(leftFlameX + pixelSize * 1.2, flameY);
+    ctx.lineTo(leftFlameX, flameY + pixelSize * flameHeight1);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Right flame
+    ctx.beginPath();
+    ctx.moveTo(rightFlameX - pixelSize * 1.2, flameY);
+    ctx.lineTo(rightFlameX + pixelSize * 1.2, flameY);
+    ctx.lineTo(rightFlameX, flameY + pixelSize * flameHeight2);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Center flame (bonus flame for more dramatic effect)
+    ctx.fillStyle = '#FF6B00';
+    ctx.beginPath();
+    ctx.moveTo(centerFlameX - pixelSize * 0.8, flameY - pixelSize);
+    ctx.lineTo(centerFlameX + pixelSize * 0.8, flameY - pixelSize);
+    ctx.lineTo(centerFlameX, flameY + pixelSize * flameHeight3);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Inner flames (yellow/white core) - LARGER
+    ctx.fillStyle = '#FFD700';
+    
+    // Left inner flame
+    ctx.beginPath();
+    ctx.moveTo(leftFlameX - pixelSize * 0.6, flameY);
+    ctx.lineTo(leftFlameX + pixelSize * 0.6, flameY);
+    ctx.lineTo(leftFlameX, flameY + pixelSize * (flameHeight1 * 0.7));
+    ctx.closePath();
+    ctx.fill();
+    
+    // Right inner flame
+    ctx.beginPath();
+    ctx.moveTo(rightFlameX - pixelSize * 0.6, flameY);
+    ctx.lineTo(rightFlameX + pixelSize * 0.6, flameY);
+    ctx.lineTo(rightFlameX, flameY + pixelSize * (flameHeight2 * 0.7));
+    ctx.closePath();
+    ctx.fill();
+    
+    // Center inner flame
+    ctx.fillStyle = '#FFFF00';
+    ctx.beginPath();
+    ctx.moveTo(centerFlameX - pixelSize * 0.4, flameY - pixelSize);
+    ctx.lineTo(centerFlameX + pixelSize * 0.4, flameY - pixelSize);
+    ctx.lineTo(centerFlameX, flameY + pixelSize * (flameHeight3 * 0.6));
+    ctx.closePath();
+    ctx.fill();
+    
+    // Flame particles - more and bigger
+    ctx.fillStyle = '#FF9500';
+    for (let i = 0; i < 6; i++) {
+        const particlePhase = ((time / 60) + i * 0.166) % 1;
+        const particleY = flameY + pixelSize * (4 + particlePhase * 8);
+        const leftParticleX = leftFlameX + Math.sin(time / 60 + i) * pixelSize * 0.8;
+        const rightParticleX = rightFlameX + Math.sin(time / 60 + i + 2) * pixelSize * 0.8;
+        const centerParticleX = centerFlameX + Math.sin(time / 60 + i + 4) * pixelSize * 0.5;
+        const particleSize = pixelSize * (1 - particlePhase) * 0.6;
         
-        const flameY = jetpackY + pixelSize * 8;
-        const leftFlameX = jetpackX + pixelSize * 1.1;
-        const rightFlameX = jetpackX + jetpackWidth - pixelSize * 1.1;
-        
-        // Outer flames (orange/red)
-        ctx.fillStyle = '#FF6B00';
-        
-        // Left flame
-        ctx.beginPath();
-        ctx.moveTo(leftFlameX - pixelSize * 0.5, flameY);
-        ctx.lineTo(leftFlameX + pixelSize * 0.5, flameY);
-        ctx.lineTo(leftFlameX, flameY + pixelSize * flameHeight1);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Right flame
-        ctx.beginPath();
-        ctx.moveTo(rightFlameX - pixelSize * 0.5, flameY);
-        ctx.lineTo(rightFlameX + pixelSize * 0.5, flameY);
-        ctx.lineTo(rightFlameX, flameY + pixelSize * flameHeight2);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Inner flames (yellow/white core)
-        ctx.fillStyle = '#FFDD00';
-        
-        // Left inner flame
-        ctx.beginPath();
-        ctx.moveTo(leftFlameX - pixelSize * 0.25, flameY);
-        ctx.lineTo(leftFlameX + pixelSize * 0.25, flameY);
-        ctx.lineTo(leftFlameX, flameY + pixelSize * (flameHeight1 * 0.65));
-        ctx.closePath();
-        ctx.fill();
-        
-        // Right inner flame
-        ctx.beginPath();
-        ctx.moveTo(rightFlameX - pixelSize * 0.25, flameY);
-        ctx.lineTo(rightFlameX + pixelSize * 0.25, flameY);
-        ctx.lineTo(rightFlameX, flameY + pixelSize * (flameHeight2 * 0.65));
-        ctx.closePath();
-        ctx.fill();
-        
-        // Flame particles
-        ctx.fillStyle = '#FF9500';
-        for (let i = 0; i < 4; i++) {
-            const particlePhase = ((time / 80) + i * 0.25) % 1;
-            const particleY = flameY + pixelSize * (3 + particlePhase * 5);
-            const leftParticleX = leftFlameX + Math.sin(time / 80 + i) * pixelSize * 0.5;
-            const rightParticleX = rightFlameX + Math.sin(time / 80 + i + 2) * pixelSize * 0.5;
-            const particleSize = pixelSize * (1 - particlePhase) * 0.4;
+        if (particleSize > 0) {
+            ctx.beginPath();
+            ctx.arc(leftParticleX, particleY, particleSize, 0, Math.PI * 2);
+            ctx.fill();
             
-            if (particleSize > 0) {
-                ctx.beginPath();
-                ctx.arc(leftParticleX, particleY, particleSize, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.beginPath();
-                ctx.arc(rightParticleX, particleY + pixelSize * 0.5, particleSize, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            ctx.beginPath();
+            ctx.arc(rightParticleX, particleY + pixelSize * 0.5, particleSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(centerParticleX, particleY - pixelSize, particleSize * 0.8, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
+    
+    // Glow effect around flames
+    ctx.shadowColor = '#FF6B00';
+    ctx.shadowBlur = pixelSize * 3;
+    ctx.fillStyle = 'rgba(255, 107, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(centerFlameX, flameY + pixelSize * 4, pixelSize * 4, pixelSize * 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
 };
 
 // Get sprite dimensions

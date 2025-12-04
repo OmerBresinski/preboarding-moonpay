@@ -133,21 +133,29 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         country: 'Space',
         officeName: 'MoonPay Lunar Base',
         funFact: 'Welcome to the MoonPay Lunar Base! As we say: "To the moon!" - but for us, that\'s just the beginning.',
-        canvasPosition: { x: 0.88, y: 0.5 },
-        mapScale: 1.0,
-        // Moon with craters - circular with crater details
+        canvasPosition: { x: 0.85, y: 0.5 },
+        mapScale: 3.5, // HUGE moon
+        // Moon with MANY craters - detailed lunar surface
         countryPath: `
-            M 50 5 
-            C 75 5, 95 25, 95 50 
-            C 95 75, 75 95, 50 95 
-            C 25 95, 5 75, 5 50 
-            C 5 25, 25 5, 50 5 Z
-            M 30 25 C 35 20, 45 20, 45 30 C 45 40, 35 40, 30 35 C 25 30, 25 25, 30 25 Z
-            M 60 45 C 70 40, 80 45, 78 55 C 76 65, 65 70, 58 65 C 50 60, 50 50, 60 45 Z
-            M 35 60 C 40 55, 50 58, 48 65 C 46 72, 38 72, 35 68 C 32 64, 30 62, 35 60 Z
-            M 70 25 C 75 22, 82 25, 80 32 C 78 38, 72 38, 70 33 C 68 28, 68 25, 70 25 Z
+            M 50 2 
+            C 78 2, 98 22, 98 50 
+            C 98 78, 78 98, 50 98 
+            C 22 98, 2 78, 2 50 
+            C 2 22, 22 2, 50 2 Z
+            M 25 20 C 32 14, 44 16, 42 26 C 40 36, 28 38, 24 32 C 20 26, 18 22, 25 20 Z
+            M 65 15 C 72 10, 82 14, 80 24 C 78 34, 68 36, 64 30 C 60 24, 58 18, 65 15 Z
+            M 18 45 C 24 40, 34 42, 32 52 C 30 62, 20 64, 16 58 C 12 52, 12 48, 18 45 Z
+            M 55 35 C 68 28, 82 34, 78 48 C 74 62, 58 68, 50 60 C 42 52, 42 42, 55 35 Z
+            M 30 65 C 38 58, 50 62, 48 74 C 46 86, 34 88, 28 80 C 22 72, 22 68, 30 65 Z
+            M 70 55 C 78 50, 88 54, 86 66 C 84 78, 74 82, 68 74 C 62 66, 62 58, 70 55 Z
+            M 42 12 C 46 8, 54 10, 52 16 C 50 22, 44 24, 42 20 C 40 16, 38 14, 42 12 Z
+            M 78 40 C 84 36, 92 40, 90 48 C 88 56, 80 58, 76 52 C 72 46, 72 42, 78 40 Z
+            M 12 28 C 16 24, 24 26, 22 34 C 20 42, 14 44, 10 38 C 6 32, 8 28, 12 28 Z
+            M 60 78 C 68 72, 80 76, 76 86 C 72 92, 62 92, 58 86 C 54 80, 52 76, 60 78 Z
+            M 35 48 C 40 44, 48 46, 46 52 C 44 58, 38 60, 34 56 C 30 52, 30 48, 35 48 Z
+            M 85 72 C 90 68, 96 72, 94 80 C 92 86, 86 88, 82 82 C 78 76, 80 70, 85 72 Z
         `,
-        pinOffset: { x: 0.5, y: 0.5 }
+        pinOffset: { x: 0.5, y: 0.45 }
     }
 };
 
