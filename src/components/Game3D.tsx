@@ -373,21 +373,25 @@ const SceneContent = ({
             characterPosRef.current = [0, 0, 0];
             flyDirectionRef.current = 0;
         } else {
-            const currentPos = LANDMARK_POSITIONS[currentLandmark];
-            const currentOffset = getCharacterOffset(currentLandmark);
-            const targetPos: [number, number, number] = [
-                currentPos[0] + currentOffset[0],
-                currentPos[1] + currentOffset[1],
-                currentPos[2] + currentOffset[2]
-            ];
-            
-            if (isFlying && transitionProgressRef.current > 0) {
+            // When flying, we interpolate from previous to current landmark
+            // When not flying, we stay at the current landmark
+            if (isFlying) {
+                // Calculate start position (previous landmark)
                 const prevPos = LANDMARK_POSITIONS[previousLandmark];
                 const prevOffset = getCharacterOffset(previousLandmark);
                 const startPos: [number, number, number] = [
                     prevPos[0] + prevOffset[0],
                     prevPos[1] + prevOffset[1],
                     prevPos[2] + prevOffset[2]
+                ];
+                
+                // Calculate target position (current/destination landmark)
+                const currentPos = LANDMARK_POSITIONS[currentLandmark];
+                const currentOffset = getCharacterOffset(currentLandmark);
+                const targetPos: [number, number, number] = [
+                    currentPos[0] + currentOffset[0],
+                    currentPos[1] + currentOffset[1],
+                    currentPos[2] + currentOffset[2]
                 ];
                 
                 // Calculate fly direction angle based on horizontal movement
@@ -401,13 +405,21 @@ const SceneContent = ({
                 // Arc motion - up in the middle
                 const arcY = Math.sin(progress * Math.PI) * flyHeight;
                 
+                // Interpolate position - at progress=0, stay at start; at progress=1, arrive at target
                 characterPosRef.current = [
                     startPos[0] + (targetPos[0] - startPos[0]) * progress,
                     startPos[1] + (targetPos[1] - startPos[1]) * progress + arcY,
                     startPos[2] + (targetPos[2] - startPos[2]) * progress
                 ];
             } else {
-                characterPosRef.current = targetPos;
+                // Not flying - stay at current landmark
+                const currentPos = LANDMARK_POSITIONS[currentLandmark];
+                const currentOffset = getCharacterOffset(currentLandmark);
+                characterPosRef.current = [
+                    currentPos[0] + currentOffset[0],
+                    currentPos[1] + currentOffset[1],
+                    currentPos[2] + currentOffset[2]
+                ];
                 flyDirectionRef.current = 0;
             }
         }
