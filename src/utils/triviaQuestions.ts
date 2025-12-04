@@ -33,12 +33,6 @@ export const TRIVIA_QUESTIONS: TriviaQuestion[] = [
         correctIndex: 1
     },
     {
-        id: 5,
-        question: "What does 'HODL' stand for in crypto culture?",
-        options: ["Hold On for Dear Life", "High Order Digital Ledger", "Honest Open Distributed Ledger", "It's a misspelling of 'hold'"],
-        correctIndex: 3
-    },
-    {
         id: 6,
         question: "What is a 'smart contract'?",
         options: ["A legal document for crypto", "Self-executing code on blockchain", "A type of hardware wallet", "An agreement between miners"],

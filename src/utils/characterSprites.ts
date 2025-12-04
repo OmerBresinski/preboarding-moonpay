@@ -424,7 +424,7 @@ export const drawCharacterSprite = (
     ctx.restore();
 };
 
-// Draw jetpack with animated flames (positioned behind character)
+// Draw jetpack with animated flames (positioned behind character, visible from multiple angles)
 const drawJetpack = (
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -434,135 +434,185 @@ const drawJetpack = (
     primaryColor: string,
     time: number
 ): void => {
-    // Jetpack position - centered on the character's back, LARGER size
-    const jetpackWidth = pixelSize * 6;
-    const jetpackX = x + (spriteWidth * pixelSize - jetpackWidth) / 2;
-    const jetpackY = y + 7 * pixelSize;
+    const charWidth = spriteWidth * pixelSize;
+    const charCenterX = x + charWidth / 2;
     
-    // Jetpack body (dark metal) - taller
+    // === JETPACK BODY (much bigger, extends above head and below legs) ===
+    const jetpackWidth = pixelSize * 10;
+    const jetpackX = charCenterX - jetpackWidth / 2;
+    const jetpackTopY = y + 2 * pixelSize; // Starts near top of head
+    const jetpackHeight = pixelSize * 22; // Extends well below the character
+    
+    // Main jetpack frame (dark metal)
+    ctx.fillStyle = '#2d2d2d';
+    ctx.fillRect(jetpackX, jetpackTopY, jetpackWidth, jetpackHeight);
+    
+    // === FUEL TANKS (large cylindrical tanks on sides) ===
+    const tankWidth = pixelSize * 3;
+    const tankHeight = pixelSize * 14;
+    const tankY = jetpackTopY + pixelSize * 2;
+    
+    // Left tank
     ctx.fillStyle = '#3a3a3a';
-    ctx.fillRect(jetpackX, jetpackY, jetpackWidth, pixelSize * 9);
-    
-    // Jetpack top cap
+    ctx.fillRect(jetpackX - tankWidth + pixelSize, tankY, tankWidth, tankHeight);
     ctx.fillStyle = '#4a4a4a';
-    ctx.fillRect(jetpackX + pixelSize * 0.5, jetpackY - pixelSize * 1.5, jetpackWidth - pixelSize, pixelSize * 1.5);
-    
-    // Jetpack tanks (left and right) - bigger tanks
-    ctx.fillStyle = '#2a2a2a';
-    ctx.fillRect(jetpackX - pixelSize * 0.5, jetpackY + pixelSize, pixelSize * 1.5, pixelSize * 7);
-    ctx.fillRect(jetpackX + jetpackWidth - pixelSize, jetpackY + pixelSize, pixelSize * 1.5, pixelSize * 7);
-    
-    // Jetpack accent stripe (character's color) - bigger
+    ctx.fillRect(jetpackX - tankWidth + pixelSize, tankY, tankWidth, pixelSize * 2); // Tank cap
     ctx.fillStyle = primaryColor;
-    ctx.fillRect(jetpackX + pixelSize * 1.5, jetpackY + pixelSize * 2, jetpackWidth - pixelSize * 3, pixelSize * 4);
+    ctx.fillRect(jetpackX - tankWidth + pixelSize + pixelSize * 0.5, tankY + pixelSize * 3, tankWidth - pixelSize, pixelSize * 8); // Tank window/gauge
     
-    // Secondary accent
-    ctx.fillStyle = '#5a5a5a';
-    ctx.fillRect(jetpackX + pixelSize * 2, jetpackY + pixelSize * 6, jetpackWidth - pixelSize * 4, pixelSize * 2);
+    // Right tank
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(jetpackX + jetpackWidth - pixelSize, tankY, tankWidth, tankHeight);
+    ctx.fillStyle = '#4a4a4a';
+    ctx.fillRect(jetpackX + jetpackWidth - pixelSize, tankY, tankWidth, pixelSize * 2); // Tank cap
+    ctx.fillStyle = primaryColor;
+    ctx.fillRect(jetpackX + jetpackWidth - pixelSize + pixelSize * 0.5, tankY + pixelSize * 3, tankWidth - pixelSize, pixelSize * 8); // Tank window/gauge
     
-    // Thruster nozzles at bottom - bigger
+    // === STRAPS (visible wrapping around character) ===
     ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(jetpackX + pixelSize * 0.5, jetpackY + pixelSize * 9, pixelSize * 2, pixelSize * 1.5);
-    ctx.fillRect(jetpackX + jetpackWidth - pixelSize * 2.5, jetpackY + pixelSize * 9, pixelSize * 2, pixelSize * 1.5);
+    // Top strap (across shoulders/chest area)
+    ctx.fillRect(x - pixelSize, y + pixelSize * 6, pixelSize * 2, pixelSize);
+    ctx.fillRect(x + charWidth - pixelSize, y + pixelSize * 6, pixelSize * 2, pixelSize);
+    // Diagonal straps going to shoulders
+    ctx.fillRect(jetpackX, jetpackTopY + pixelSize * 4, pixelSize * 2, pixelSize);
+    ctx.fillRect(jetpackX + jetpackWidth - pixelSize * 2, jetpackTopY + pixelSize * 4, pixelSize * 2, pixelSize);
+    // Waist strap
+    ctx.fillRect(x - pixelSize, y + pixelSize * 12, pixelSize * 2, pixelSize);
+    ctx.fillRect(x + charWidth - pixelSize, y + pixelSize * 12, pixelSize * 2, pixelSize);
+    // Strap buckles (metallic)
+    ctx.fillStyle = '#666666';
+    ctx.fillRect(x - pixelSize * 0.5, y + pixelSize * 5.5, pixelSize, pixelSize * 2);
+    ctx.fillRect(x + charWidth - pixelSize * 0.5, y + pixelSize * 5.5, pixelSize, pixelSize * 2);
+    ctx.fillRect(x - pixelSize * 0.5, y + pixelSize * 11.5, pixelSize, pixelSize * 2);
+    ctx.fillRect(x + charWidth - pixelSize * 0.5, y + pixelSize * 11.5, pixelSize, pixelSize * 2);
     
-    // ALWAYS draw flames (always active)
+    // === CENTRAL BODY DETAILS ===
+    // Main accent panel
+    ctx.fillStyle = primaryColor;
+    ctx.fillRect(jetpackX + pixelSize * 2, jetpackTopY + pixelSize * 3, jetpackWidth - pixelSize * 4, pixelSize * 6);
+    
+    // Control panel / vents
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(jetpackX + pixelSize * 3, jetpackTopY + pixelSize * 10, jetpackWidth - pixelSize * 6, pixelSize * 4);
+    // Vent lines
+    ctx.fillStyle = '#3a3a3a';
+    for (let i = 0; i < 3; i++) {
+        ctx.fillRect(jetpackX + pixelSize * 3.5, jetpackTopY + pixelSize * (10.5 + i * 1.2), jetpackWidth - pixelSize * 7, pixelSize * 0.6);
+    }
+    
+    // === THRUSTER SECTION (extends below character legs) ===
+    const thrusterY = jetpackTopY + jetpackHeight - pixelSize * 6;
+    
+    // Thruster housing
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(jetpackX - pixelSize, thrusterY, jetpackWidth + pixelSize * 2, pixelSize * 6);
+    
+    // Left thruster nozzle
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(jetpackX - tankWidth + pixelSize * 2, thrusterY + pixelSize * 2, pixelSize * 3, pixelSize * 5);
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(jetpackX - tankWidth + pixelSize * 2.5, thrusterY + pixelSize * 5, pixelSize * 2, pixelSize * 2);
+    
+    // Right thruster nozzle
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(jetpackX + jetpackWidth - pixelSize, thrusterY + pixelSize * 2, pixelSize * 3, pixelSize * 5);
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(jetpackX + jetpackWidth - pixelSize * 0.5, thrusterY + pixelSize * 5, pixelSize * 2, pixelSize * 2);
+    
+    // Center thruster nozzle (bigger)
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(charCenterX - pixelSize * 2.5, thrusterY + pixelSize * 3, pixelSize * 5, pixelSize * 5);
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(charCenterX - pixelSize * 2, thrusterY + pixelSize * 6, pixelSize * 4, pixelSize * 2);
+    
+    // === FLAMES (centered under the main jetpack body) ===
     const flamePhase = (time / 40) % 1;
-    const flameHeight1 = 8 + Math.sin(flamePhase * Math.PI * 2) * 4;
-    const flameHeight2 = 8 + Math.sin((flamePhase + 0.5) * Math.PI * 2) * 4;
-    const flameHeight3 = 7 + Math.sin((flamePhase + 0.25) * Math.PI * 2) * 3;
+    const flameY = thrusterY + pixelSize * 8;
     
-    const flameY = jetpackY + pixelSize * 10.5;
-    const leftFlameX = jetpackX + pixelSize * 1.5;
-    const rightFlameX = jetpackX + jetpackWidth - pixelSize * 1.5;
-    const centerFlameX = jetpackX + jetpackWidth / 2;
+    // Flame heights - reduced size
+    const leftFlameH = 5 + Math.sin(flamePhase * Math.PI * 2) * 2;
+    const rightFlameH = 5 + Math.sin((flamePhase + 0.5) * Math.PI * 2) * 2;
+    const centerFlameH = 7 + Math.sin((flamePhase + 0.25) * Math.PI * 2) * 2.5;
     
-    // Outer flames (orange/red) - MUCH LARGER
+    // Centered flame positions (closer together under the main body)
+    const leftFlameX = charCenterX - pixelSize * 2.5;
+    const rightFlameX = charCenterX + pixelSize * 2.5;
+    
+    // Outer flames (red/orange)
     ctx.fillStyle = '#FF4500';
     
     // Left flame
     ctx.beginPath();
-    ctx.moveTo(leftFlameX - pixelSize * 1.2, flameY);
-    ctx.lineTo(leftFlameX + pixelSize * 1.2, flameY);
-    ctx.lineTo(leftFlameX, flameY + pixelSize * flameHeight1);
+    ctx.moveTo(leftFlameX - pixelSize, flameY);
+    ctx.lineTo(leftFlameX + pixelSize, flameY);
+    ctx.lineTo(leftFlameX, flameY + pixelSize * leftFlameH);
     ctx.closePath();
     ctx.fill();
     
     // Right flame
     ctx.beginPath();
-    ctx.moveTo(rightFlameX - pixelSize * 1.2, flameY);
-    ctx.lineTo(rightFlameX + pixelSize * 1.2, flameY);
-    ctx.lineTo(rightFlameX, flameY + pixelSize * flameHeight2);
+    ctx.moveTo(rightFlameX - pixelSize, flameY);
+    ctx.lineTo(rightFlameX + pixelSize, flameY);
+    ctx.lineTo(rightFlameX, flameY + pixelSize * rightFlameH);
     ctx.closePath();
     ctx.fill();
     
-    // Center flame (bonus flame for more dramatic effect)
+    // Center flame (main flame)
     ctx.fillStyle = '#FF6B00';
     ctx.beginPath();
-    ctx.moveTo(centerFlameX - pixelSize * 0.8, flameY - pixelSize);
-    ctx.lineTo(centerFlameX + pixelSize * 0.8, flameY - pixelSize);
-    ctx.lineTo(centerFlameX, flameY + pixelSize * flameHeight3);
+    ctx.moveTo(charCenterX - pixelSize * 1.5, flameY);
+    ctx.lineTo(charCenterX + pixelSize * 1.5, flameY);
+    ctx.lineTo(charCenterX, flameY + pixelSize * centerFlameH);
     ctx.closePath();
     ctx.fill();
     
-    // Inner flames (yellow/white core) - LARGER
+    // Inner flames (yellow core)
     ctx.fillStyle = '#FFD700';
     
-    // Left inner flame
     ctx.beginPath();
-    ctx.moveTo(leftFlameX - pixelSize * 0.6, flameY);
-    ctx.lineTo(leftFlameX + pixelSize * 0.6, flameY);
-    ctx.lineTo(leftFlameX, flameY + pixelSize * (flameHeight1 * 0.7));
+    ctx.moveTo(leftFlameX - pixelSize * 0.5, flameY);
+    ctx.lineTo(leftFlameX + pixelSize * 0.5, flameY);
+    ctx.lineTo(leftFlameX, flameY + pixelSize * (leftFlameH * 0.6));
     ctx.closePath();
     ctx.fill();
     
-    // Right inner flame
     ctx.beginPath();
-    ctx.moveTo(rightFlameX - pixelSize * 0.6, flameY);
-    ctx.lineTo(rightFlameX + pixelSize * 0.6, flameY);
-    ctx.lineTo(rightFlameX, flameY + pixelSize * (flameHeight2 * 0.7));
+    ctx.moveTo(rightFlameX - pixelSize * 0.5, flameY);
+    ctx.lineTo(rightFlameX + pixelSize * 0.5, flameY);
+    ctx.lineTo(rightFlameX, flameY + pixelSize * (rightFlameH * 0.6));
     ctx.closePath();
     ctx.fill();
     
-    // Center inner flame
-    ctx.fillStyle = '#FFFF00';
+    // Center inner flame (bright yellow)
+    ctx.fillStyle = '#FFFF44';
     ctx.beginPath();
-    ctx.moveTo(centerFlameX - pixelSize * 0.4, flameY - pixelSize);
-    ctx.lineTo(centerFlameX + pixelSize * 0.4, flameY - pixelSize);
-    ctx.lineTo(centerFlameX, flameY + pixelSize * (flameHeight3 * 0.6));
+    ctx.moveTo(charCenterX - pixelSize * 0.8, flameY);
+    ctx.lineTo(charCenterX + pixelSize * 0.8, flameY);
+    ctx.lineTo(charCenterX, flameY + pixelSize * (centerFlameH * 0.55));
     ctx.closePath();
     ctx.fill();
     
-    // Flame particles - more and bigger
+    // Flame particles - fewer and centered
     ctx.fillStyle = '#FF9500';
-    for (let i = 0; i < 6; i++) {
-        const particlePhase = ((time / 60) + i * 0.166) % 1;
-        const particleY = flameY + pixelSize * (4 + particlePhase * 8);
-        const leftParticleX = leftFlameX + Math.sin(time / 60 + i) * pixelSize * 0.8;
-        const rightParticleX = rightFlameX + Math.sin(time / 60 + i + 2) * pixelSize * 0.8;
-        const centerParticleX = centerFlameX + Math.sin(time / 60 + i + 4) * pixelSize * 0.5;
-        const particleSize = pixelSize * (1 - particlePhase) * 0.6;
+    for (let i = 0; i < 4; i++) {
+        const particlePhase = ((time / 60) + i * 0.25) % 1;
+        const particleY = flameY + pixelSize * (3 + particlePhase * 5);
+        const xOffset = Math.sin(time / 60 + i * 2) * pixelSize * 0.8;
+        const particleSize = pixelSize * (1 - particlePhase) * 0.5;
         
         if (particleSize > 0) {
             ctx.beginPath();
-            ctx.arc(leftParticleX, particleY, particleSize, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.beginPath();
-            ctx.arc(rightParticleX, particleY + pixelSize * 0.5, particleSize, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.beginPath();
-            ctx.arc(centerParticleX, particleY - pixelSize, particleSize * 0.8, 0, Math.PI * 2);
+            ctx.arc(charCenterX + xOffset, particleY, particleSize, 0, Math.PI * 2);
             ctx.fill();
         }
     }
     
-    // Glow effect around flames
+    // Subtle glow effect
     ctx.shadowColor = '#FF6B00';
-    ctx.shadowBlur = pixelSize * 3;
-    ctx.fillStyle = 'rgba(255, 107, 0, 0.3)';
+    ctx.shadowBlur = pixelSize * 2;
+    ctx.fillStyle = 'rgba(255, 107, 0, 0.15)';
     ctx.beginPath();
-    ctx.ellipse(centerFlameX, flameY + pixelSize * 4, pixelSize * 4, pixelSize * 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(charCenterX, flameY + pixelSize * 3, pixelSize * 3, pixelSize * 5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 };
