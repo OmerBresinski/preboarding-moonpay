@@ -1,38 +1,27 @@
-// Game State Management
+// Game State Management for 2D MoonBase Game
+
+import { MOONBASE_ORDER, type MoonBaseLocation, getMoonBaseByIndex, isFinalDestination } from './moonbases';
 
 export type GamePhase = 'character-creation' | 'trivia' | 'victory';
 
-export type Landmark = 'yacht' | 'statue-of-liberty' | 'eiffel-tower' | 'burj-khalifa' | 'iss' | 'moon';
+// Re-export for convenience
+export type { MoonBaseLocation };
+export { MOONBASE_ORDER, getMoonBaseByIndex };
 
-export const LANDMARKS: Landmark[] = [
-    'yacht',
-    'statue-of-liberty', 
-    'eiffel-tower',
-    'burj-khalifa',
-    'iss',
-    'moon'
-];
-
-export const LANDMARK_NAMES: Record<Landmark, string> = {
-    'yacht': 'The Yacht',
-    'statue-of-liberty': 'Statue of Liberty',
-    'eiffel-tower': 'Eiffel Tower',
-    'burj-khalifa': 'Burj Khalifa',
-    'iss': 'International Space Station',
+export const MOONBASE_NAMES: Record<MoonBaseLocation, string> = {
+    'london': 'London',
+    'amsterdam': 'Amsterdam',
+    'barcelona': 'Barcelona',
+    'dublin': 'Dublin',
+    'new-york': 'New York',
     'moon': 'The Moon'
 };
-
-export interface CharacterConfig {
-    headIndex: number;
-    torsoIndex: number;
-    legsIndex: number;
-}
 
 export interface GameState {
     phase: GamePhase;
     playerName: string;
-    currentLandmarkIndex: number;
-    character: CharacterConfig;
+    currentLocationIndex: number;
+    selectedCharacterPreset: number;
     currentQuestionIndex: number;
     answeredQuestions: number[];
     isTransitioning: boolean;
@@ -41,41 +30,37 @@ export interface GameState {
 export const createInitialGameState = (playerName: string): GameState => ({
     phase: 'character-creation',
     playerName: playerName || 'Player',
-    currentLandmarkIndex: 0,
-    character: {
-        headIndex: 0,
-        torsoIndex: 0,
-        legsIndex: 0
-    },
+    currentLocationIndex: 0,
+    selectedCharacterPreset: 0,
     currentQuestionIndex: 0,
     answeredQuestions: [],
     isTransitioning: false
 });
 
-export const getCurrentLandmark = (state: GameState): Landmark => {
-    return LANDMARKS[state.currentLandmarkIndex];
+export const getCurrentLocation = (state: GameState): MoonBaseLocation => {
+    return MOONBASE_ORDER[state.currentLocationIndex];
 };
 
-export const getNextLandmark = (state: GameState): Landmark | null => {
-    if (state.currentLandmarkIndex >= LANDMARKS.length - 1) return null;
-    return LANDMARKS[state.currentLandmarkIndex + 1];
+export const getNextLocation = (state: GameState): MoonBaseLocation | null => {
+    if (state.currentLocationIndex >= MOONBASE_ORDER.length - 1) return null;
+    return MOONBASE_ORDER[state.currentLocationIndex + 1];
 };
 
-export const advanceToNextLandmark = (state: GameState): GameState => {
-    const nextIndex = state.currentLandmarkIndex + 1;
+export const advanceToNextLocation = (state: GameState): GameState => {
+    const nextIndex = state.currentLocationIndex + 1;
     
-    if (nextIndex >= LANDMARKS.length) {
+    if (nextIndex >= MOONBASE_ORDER.length) {
         // Reached the moon!
         return {
             ...state,
             phase: 'victory',
-            currentLandmarkIndex: LANDMARKS.length - 1
+            currentLocationIndex: MOONBASE_ORDER.length - 1
         };
     }
     
     return {
         ...state,
-        currentLandmarkIndex: nextIndex,
+        currentLocationIndex: nextIndex,
         isTransitioning: true
     };
 };
@@ -83,7 +68,7 @@ export const advanceToNextLandmark = (state: GameState): GameState => {
 export const startGame = (state: GameState): GameState => ({
     ...state,
     phase: 'trivia',
-    currentLandmarkIndex: 0
+    currentLocationIndex: 0
 });
 
 export const finishTransition = (state: GameState): GameState => ({
@@ -91,3 +76,6 @@ export const finishTransition = (state: GameState): GameState => ({
     isTransitioning: false
 });
 
+export const isAtFinalDestination = (state: GameState): boolean => {
+    return isFinalDestination(getCurrentLocation(state));
+};

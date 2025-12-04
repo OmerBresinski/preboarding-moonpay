@@ -1,7 +1,7 @@
-import Game3D from './components/Game3D';
+import Game2D from './components/Game2D';
 
 function App() {
-  return <Game3D />;
+  return <Game2D />;
 }
 
 export default App;

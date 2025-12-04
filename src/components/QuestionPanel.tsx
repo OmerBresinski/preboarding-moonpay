@@ -1,22 +1,22 @@
 import type React from 'react';
 import { useState, useRef, useLayoutEffect } from 'react';
 import type { TriviaQuestion } from '../utils/triviaQuestions';
-import type { Landmark } from '../utils/gameState';
-import { LANDMARK_NAMES } from '../utils/gameState';
+import type { MoonBaseLocation } from '../utils/gameState';
+import { MOONBASE_NAMES } from '../utils/gameState';
 
 interface QuestionPanelProps {
     question: TriviaQuestion;
-    currentLandmark: Landmark;
+    currentLocation: MoonBaseLocation;
     currentIndex: number;
-    totalLandmarks: number;
+    totalLocations: number;
     onAnswer: (isCorrect: boolean) => void;
 }
 
 const QuestionPanel: React.FC<QuestionPanelProps> = ({
     question,
-    currentLandmark,
+    currentLocation,
     currentIndex,
-    totalLandmarks,
+    totalLocations,
     onAnswer
 }) => {
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -51,7 +51,7 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
         }
     };
 
-    const progressPercent = (currentIndex / (totalLandmarks - 1)) * 100;
+    const progressPercent = (currentIndex / (totalLocations - 1)) * 100;
 
     return (
         <div style={{
@@ -60,11 +60,11 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
         }}>
             {/* Progress Bar */}
             <div style={styles.progressRow}>
-                <span style={styles.locationLabel}>📍 {LANDMARK_NAMES[currentLandmark]}</span>
+                <span style={styles.locationLabel}>📍 {MOONBASE_NAMES[currentLocation]}</span>
                 <div style={styles.progressBar}>
                     <div style={{ ...styles.progressFill, width: `${progressPercent}%` }} />
                 </div>
-                <span style={styles.progressText}>{currentIndex + 1}/{totalLandmarks}</span>
+                <span style={styles.progressText}>{currentIndex + 1}/{totalLocations}</span>
             </div>
             
             {/* Question */}
@@ -99,7 +99,7 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
             
             {/* Feedback */}
             {isWrong && <div style={{...styles.feedback, color: '#FF6666'}}>❌ Try again!</div>}
-            {isCorrect && <div style={{ ...styles.feedback, color: '#66FF66', borderColor: 'rgba(0, 200, 0, 0.3)' }}>✅ Correct!</div>}
+            {isCorrect && <div style={{ ...styles.feedback, color: '#66FF66', borderColor: 'rgba(0, 200, 0, 0.3)' }}>✅ Correct! Flying to next destination...</div>}
             
             {/* Shake animation */}
             <style>{`
@@ -113,87 +113,94 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
     );
 };
 
+const FONT_FAMILY = "'Space Grotesk', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
+
 const styles: { [key: string]: React.CSSProperties } = {
     panel: {
         position: 'absolute',
         bottom: 20,
-        left: 20,
-        right: 20,
-        background: 'rgba(20, 10, 40, 0.9)',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 'calc(100% - 280px)',
+        maxWidth: 900,
+        background: 'rgba(13, 11, 26, 0.95)',
         backdropFilter: 'blur(20px)',
-        padding: '16px 24px',
+        padding: '20px 28px',
         borderRadius: 16,
         border: '1px solid rgba(125, 0, 255, 0.3)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(125, 0, 255, 0.15)',
-        fontFamily: "'Plus Jakarta Sans', 'Segoe UI', sans-serif"
+        fontFamily: FONT_FAMILY,
+        zIndex: 50
     },
     progressRow: {
         display: 'flex',
         alignItems: 'center',
         gap: 15,
-        marginBottom: 12
+        marginBottom: 16
     },
     locationLabel: {
         color: '#FFF',
         fontSize: 14,
         whiteSpace: 'nowrap',
-        fontWeight: 500
+        fontWeight: 600,
+        letterSpacing: 0.3
     },
     progressBar: {
         flex: 1,
         height: 6,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'rgba(125, 0, 255, 0.2)',
         borderRadius: 3,
         overflow: 'hidden'
     },
     progressFill: {
         height: '100%',
-        background: 'linear-gradient(90deg, #7D00FF 0%, #A855F7 100%)',
+        background: 'linear-gradient(90deg, #7D00FF 0%, #B366FF 100%)',
         transition: 'width 0.5s ease-out',
         borderRadius: 3
     },
     progressText: {
         color: 'rgba(255, 255, 255, 0.6)',
         fontSize: 13,
-        fontWeight: 500
+        fontWeight: 600
     },
     questionRow: {
-        marginBottom: 14
+        marginBottom: 18
     },
     questionText: {
         color: '#FFF',
-        fontSize: 17,
+        fontSize: 18,
         fontWeight: 500,
-        lineHeight: 1.4
+        lineHeight: 1.5
     },
     answersRow: {
-        display: 'flex',
-        gap: 10,
-        flexWrap: 'wrap'
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: 12
     },
     answerButton: {
-        flex: '1 1 calc(25% - 10px)',
-        minWidth: 120,
-        padding: '12px 16px',
+        padding: '14px 18px',
         fontSize: 14,
         color: '#FFF',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: 10,
-        transition: 'all 0.15s ease',
-        fontWeight: 500
+        borderRadius: 12,
+        transition: 'all 0.2s ease',
+        fontWeight: 500,
+        fontFamily: FONT_FAMILY,
+        textAlign: 'left'
     },
     feedback: {
         position: 'absolute',
-        top: -40,
+        top: -48,
         left: '50%',
         transform: 'translateX(-50%)',
-        padding: '8px 16px',
-        borderRadius: 8,
+        padding: '10px 20px',
+        borderRadius: 10,
         fontSize: 14,
         fontWeight: 600,
-        background: 'rgba(20, 10, 40, 0.9)',
+        background: 'rgba(13, 11, 26, 0.95)',
         backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 68, 68, 0.3)'
+        border: '1px solid rgba(255, 68, 68, 0.3)',
+        whiteSpace: 'nowrap'
     }
 };
 
