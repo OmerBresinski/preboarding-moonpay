@@ -5,7 +5,6 @@ import { MOONBASE_DATA, type MoonBaseInfo } from '../utils/moonbases';
 import { 
     drawSpaceBackground, 
     drawCountryMap, 
-    drawMoonPayPin, 
     drawOfficeLabel,
     drawProgressPath,
     calculateJumpArcPosition,
@@ -186,7 +185,7 @@ const GameCanvas2D = ({
                     const drawX = loc.x - mapWidth / 2;
                     const drawY = loc.y - mapHeight / 2;
                     
-                    // Draw country map
+                    // Draw country map (pins are baked into the images)
                     drawCountryMap(
                         ctx,
                         loc.moonbase,
@@ -197,14 +196,10 @@ const GameCanvas2D = ({
                         isCompleted
                     );
                     
-                    // Draw pin marker at the pin offset position
-                    const pinX = drawX + loc.moonbase.pinOffset.x * mapWidth;
-                    const pinY = drawY + loc.moonbase.pinOffset.y * mapHeight;
-                    drawMoonPayPin(ctx, pinX, pinY, 0.7, isActive, time / 500);
-                    
-                    // Draw label below the location
+                    // Draw label below the location, tooltip above the map
                     const labelY = drawY + mapHeight + 30;
-                    drawOfficeLabel(ctx, loc.moonbase, drawX + mapWidth / 2, labelY, isHovered);
+                    const tooltipY = drawY - 20; // Position tooltip above the map
+                    drawOfficeLabel(ctx, loc.moonbase, drawX + mapWidth / 2, labelY, isHovered, tooltipY);
                 });
                 
                 ctx.globalAlpha = 1;
@@ -383,11 +378,20 @@ const GameCanvas2D = ({
         
         const locations = getLocationCanvasPositions(canvas.width, canvas.height);
         
-        // Check if hovering over any location
+        // Check if hovering over any location (check if mouse is within map bounds)
+        const baseScale = Math.min(canvas.width / 1920, canvas.height / 1080) * 0.8;
+        
         let foundHover = false;
         for (const loc of locations) {
-            const dist = Math.sqrt((x - loc.x) ** 2 + (y - loc.y) ** 2);
-            if (dist < 80) {
+            const mapScale = baseScale * loc.moonbase.mapScale;
+            const mapWidth = 800 * mapScale;
+            const mapHeight = 800 * mapScale;
+            const drawX = loc.x - mapWidth / 2;
+            const drawY = loc.y - mapHeight / 2;
+            
+            // Check if mouse is within the map bounds
+            if (x >= drawX && x <= drawX + mapWidth && 
+                y >= drawY && y <= drawY + mapHeight) {
                 setHoveredLocation(loc.id);
                 foundHover = true;
                 break;

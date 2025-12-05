@@ -247,7 +247,8 @@ export const drawOfficeLabel = (
     moonbase: MoonBaseInfo,
     x: number,
     y: number,
-    isHovered: boolean = false
+    isHovered: boolean = false,
+    tooltipY?: number // Optional: Y position for tooltip (above the map)
 ): void => {
     ctx.save();
     
@@ -262,9 +263,10 @@ export const drawOfficeLabel = (
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.fillText(moonbase.name, x, y + 18);
     
-    // Fun fact tooltip on hover
+    // Fun fact tooltip on hover (positioned above the map if tooltipY is provided)
     if (isHovered) {
-        drawTooltip(ctx, moonbase.funFact, x, y - 40, 250);
+        const tipY = tooltipY !== undefined ? tooltipY : y - 40;
+        drawTooltip(ctx, moonbase.funFact, x, tipY, 280);
     }
     
     ctx.restore();
@@ -329,14 +331,6 @@ export const drawTooltip = (
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    
-    // Arrow pointing down
-    ctx.beginPath();
-    ctx.moveTo(x - 8, boxY + boxHeight);
-    ctx.lineTo(x, boxY + boxHeight + 8);
-    ctx.lineTo(x + 8, boxY + boxHeight);
-    ctx.fillStyle = 'rgba(13, 11, 26, 0.9)';
-    ctx.fill();
     
     // Text
     ctx.fillStyle = COLORS.mpWhite;
