@@ -131,7 +131,8 @@ export const drawCountryMap = (
     y: number,
     scale: number = 1,
     isActive: boolean = false,
-    isCompleted: boolean = false
+    isCompleted: boolean = false,
+    isHovered: boolean = false
 ): void => {
     ctx.save();
     
@@ -144,7 +145,12 @@ export const drawCountryMap = (
             const imgHeight = img.height * scale;
             
             // Apply effects based on state
-            if (isActive) {
+            if (isHovered) {
+                // White outline glow when hovered
+                ctx.shadowColor = '#FFFFFF';
+                ctx.shadowBlur = 25;
+                ctx.globalAlpha = 1;
+            } else if (isActive) {
                 ctx.shadowColor = COLORS.mpPurple;
                 ctx.shadowBlur = 20;
             } else if (isCompleted) {
@@ -154,6 +160,14 @@ export const drawCountryMap = (
             }
             
             ctx.drawImage(img, x, y, imgWidth, imgHeight);
+            
+            // Draw again for stronger glow effect when hovered
+            if (isHovered) {
+                ctx.shadowBlur = 40;
+                ctx.globalAlpha = 0.5;
+                ctx.drawImage(img, x, y, imgWidth, imgHeight);
+            }
+            
             ctx.restore();
             return;
         }
@@ -169,7 +183,11 @@ export const drawCountryMap = (
     const path = new Path2D(moonbase.countryPath);
     
     // Fill color based on state
-    if (isActive) {
+    if (isHovered) {
+        ctx.fillStyle = COLORS.mpPurpleLight;
+        ctx.shadowColor = '#FFFFFF';
+        ctx.shadowBlur = 30;
+    } else if (isActive) {
         ctx.fillStyle = COLORS.mpPurpleLight;
         ctx.shadowColor = COLORS.mpPurple;
         ctx.shadowBlur = 20;
@@ -182,8 +200,8 @@ export const drawCountryMap = (
     ctx.fill(path);
     
     // Outline
-    ctx.strokeStyle = isActive ? COLORS.mpWhite : 'rgba(255, 255, 255, 0.5)';
-    ctx.lineWidth = isActive ? 2 : 1;
+    ctx.strokeStyle = (isActive || isHovered) ? COLORS.mpWhite : 'rgba(255, 255, 255, 0.5)';
+    ctx.lineWidth = (isActive || isHovered) ? 2 : 1;
     ctx.stroke(path);
     
     ctx.restore();

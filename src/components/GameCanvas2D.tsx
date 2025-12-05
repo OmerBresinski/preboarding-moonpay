@@ -11,9 +11,7 @@ import {
     drawJumpTrail,
     initStarField,
     easing,
-    preloadImage,
-    drawCursorShimmer,
-    clearShimmerParticles
+    preloadImage
 } from '../utils/canvasRenderer';
 import { drawCharacterSprite, getSpriteSize, type CharacterPreset } from '../utils/characterSprites';
 
@@ -57,13 +55,13 @@ const GameCanvas2D = ({
         currentX: number;
         currentY: number;
     }>({
-        zoom: 1.8, // Zoomed in by default
+        zoom: 2.8, // Zoomed in by default (matches ZOOM_IN)
         targetX: 0,
         targetY: 0,
         currentX: 0,
         currentY: 0
     });
-    const ZOOM_IN = 1.6; // Zoom level when focused on a moonbase
+    const ZOOM_IN = 2.8; // Zoom level when focused on a moonbase (fills ~60% of screen)
     const ZOOM_OUT = 1.0; // Zoom level when showing all moonbases
     
     // Mouse position in world coordinates (for character interaction)
@@ -194,7 +192,7 @@ const GameCanvas2D = ({
             
             // Calculate base scale based on canvas size
             const baseScale = Math.min(width / 1920, height / 1080) * 0.8;
-            const gameScale = Math.max(3, Math.floor(baseScale * 4));
+            const gameScale = Math.max(2, Math.floor(baseScale * 4 * 0.7)); // 30% smaller character
             
             // Character creation large scale
             const creationScale = Math.max(8, Math.floor(baseScale * 12));
@@ -255,24 +253,14 @@ const GameCanvas2D = ({
                         drawY,
                         mapScale,
                         isActive,
-                        isCompleted
+                        isCompleted,
+                        isHovered // Pass hover state for glow effect
                     );
                     
                     // Draw label below the location, tooltip above the map
                     const labelY = drawY + mapHeight + 30;
                     const tooltipY = drawY - 20; // Position tooltip above the map
                     drawOfficeLabel(ctx, loc.moonbase, drawX + mapWidth / 2, labelY, isHovered, tooltipY);
-                    
-                    // Draw shimmer effect at cursor when hovering over moonbase
-                    if (isHovered && mousePositionRef.current) {
-                        drawCursorShimmer(
-                            ctx,
-                            mousePositionRef.current.worldX,
-                            mousePositionRef.current.worldY,
-                            time / 1000,
-                            true
-                        );
-                    }
                 });
                 
                 ctx.globalAlpha = 1;
@@ -490,7 +478,6 @@ const GameCanvas2D = ({
         
         if (!foundHover) {
             setHoveredLocation(null);
-            clearShimmerParticles();
         }
     }, [getLocationCanvasPositions]);
 
