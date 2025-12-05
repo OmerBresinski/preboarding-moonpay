@@ -190,7 +190,11 @@ const Game2D = () => {
             {showVictoryScreen === 1 && (
                 <div style={styles.victoryOverlay}>
                     <div style={styles.unlockCard}>
-                        <div style={styles.moonpayLogo}>🌙</div>
+                        <div style={styles.moonpayLogo}>
+                            <svg width="80" height="80" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fill="#7D00FF" d="M14.555 6.928a2.464 2.464 0 1 0 0-4.928 2.464 2.464 0 0 0 0 4.928M6.998 18.025a6.004 6.004 0 1 1 .01-12.008 6.004 6.004 0 0 1-.01 12.008"/>
+                            </svg>
+                        </div>
                         <h1 style={styles.unlockTitle}>You've unlocked $20 on MoonPay!</h1>
                         <p style={styles.unlockDisclaimer}>
                             The first $20 are on us — expense it on your first day and share your feedback!
@@ -257,7 +261,7 @@ const CharacterPreview = ({ preset }: { preset: CharacterPreset }) => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
         
-        const scale = 2;
+        const scale = 2.5;
         const spriteWidth = preset.spriteData[0].length * scale;
         const spriteHeight = preset.spriteData.length * scale;
         
@@ -348,60 +352,66 @@ const styles: { [key: string]: React.CSSProperties } = {
         right: 20,
         top: '50%',
         transform: 'translateY(-50%)',
-        zIndex: 10
+        zIndex: 10,
+        maxHeight: '85vh',
+        overflowY: 'auto'
     },
     presetPanel: {
         background: 'rgba(13, 11, 26, 0.95)',
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(125, 0, 255, 0.3)',
-        borderRadius: 16,
-        padding: '16px',
-        minWidth: 340,
+        borderRadius: 20,
+        padding: '20px 24px',
+        minWidth: 380,
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(125, 0, 255, 0.15)'
     },
     presetTitle: {
         color: '#FFF',
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 700,
-        margin: '0 0 16px 0',
+        margin: '0 0 20px 0',
         textAlign: 'center',
         fontFamily: FONT_FAMILY
     },
     presetGrid: {
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: 6,
-        maxWidth: 320
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 10,
+        maxWidth: 360
     },
     presetButton: {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: 6,
+        padding: 10,
         border: '2px solid',
-        borderRadius: 10,
+        borderRadius: 12,
         cursor: 'pointer',
-        transition: 'all 0.2s ease'
+        transition: 'all 0.2s ease',
+        minHeight: 95
     },
     previewCanvas: {
-        width: 32,
-        height: 48,
+        width: 40,
+        height: 60,
         imageRendering: 'pixelated'
     },
     presetName: {
         color: '#FFF',
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 600,
-        marginTop: 4,
-        fontFamily: FONT_FAMILY
+        marginTop: 6,
+        fontFamily: FONT_FAMILY,
+        textAlign: 'center'
     },
     presetDescription: {
-        color: 'rgba(255, 255, 255, 0.6)',
-        fontSize: 12,
+        color: 'rgba(255, 255, 255, 0.85)',
+        fontSize: 13,
         textAlign: 'center',
-        marginTop: 12,
+        marginTop: 16,
         marginBottom: 0,
-        fontFamily: FONT_FAMILY
+        fontFamily: FONT_FAMILY,
+        fontStyle: 'italic',
+        lineHeight: 1.4
     },
     bottomButtonContainer: {
         position: 'absolute',
@@ -451,8 +461,9 @@ const styles: { [key: string]: React.CSSProperties } = {
         boxShadow: '0 0 60px rgba(125, 0, 255, 0.3)'
     },
     moonpayLogo: {
-        fontSize: 64,
-        marginBottom: 24
+        marginBottom: 24,
+        display: 'flex',
+        justifyContent: 'center'
     },
     unlockTitle: {
         color: '#FFF',
