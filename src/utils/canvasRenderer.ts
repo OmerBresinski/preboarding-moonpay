@@ -361,58 +361,88 @@ export const drawTooltip = (
     ctx.restore();
 };
 
-// Draw progress path connecting locations
+// Helper to calculate point along a line segment, stopping at a gap
+const getPointWithGap = (
+    fromX: number, fromY: number,
+    toX: number, toY: number,
+    gapRadius: number,
+    isStart: boolean // true = start from gap, false = stop at gap
+): { x: number; y: number } => {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist === 0) return { x: fromX, y: fromY };
+    
+    const ratio = gapRadius / dist;
+    if (isStart) {
+        // Start point: move away from 'from' towards 'to'
+        return { x: fromX + dx * ratio, y: fromY + dy * ratio };
+    } else {
+        // End point: stop before reaching 'to'
+        return { x: toX - dx * ratio, y: toY - dy * ratio };
+    }
+};
+
+// Draw progress path connecting locations (with gaps around each point)
 export const drawProgressPath = (
     ctx: CanvasRenderingContext2D,
     points: { x: number; y: number }[],
     currentIndex: number,
-    animationProgress: number = 1
+    animationProgress: number = 1,
+    gapRadius: number = 80 // Gap radius around each map
 ): void => {
     if (points.length < 2) return;
     
     ctx.save();
     
-    // Completed path (solid)
-    ctx.strokeStyle = COLORS.mpPurple;
-    ctx.lineWidth = 3;
-    ctx.setLineDash([]);
-    
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    
-    for (let i = 1; i <= currentIndex && i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
-    }
-    ctx.stroke();
-    
-    // Current transition animation
-    if (currentIndex < points.length - 1 && animationProgress < 1) {
-        const from = points[currentIndex];
-        const to = points[currentIndex + 1];
-        const currentX = from.x + (to.x - from.x) * animationProgress;
-        const currentY = from.y + (to.y - from.y) * animationProgress;
+    // Draw each segment separately to create gaps around maps
+    const drawSegment = (
+        fromIdx: number, 
+        toIdx: number, 
+        style: string, 
+        lineWidth: number, 
+        dashed: boolean,
+        partialProgress?: number // 0-1 for partial segment
+    ) => {
+        const from = points[fromIdx];
+        const to = points[toIdx];
         
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(currentX, currentY);
-        ctx.strokeStyle = COLORS.mpPurpleGlow;
-        ctx.stroke();
-    }
-    
-    // Remaining path (dashed)
-    if (currentIndex < points.length - 1) {
-        ctx.strokeStyle = 'rgba(125, 0, 255, 0.3)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([8, 8]);
+        // Calculate start and end points with gaps
+        const startPt = getPointWithGap(from.x, from.y, to.x, to.y, gapRadius, true);
+        let endPt = getPointWithGap(from.x, from.y, to.x, to.y, gapRadius, false);
         
-        const startIdx = Math.max(currentIndex, 0);
-        ctx.beginPath();
-        ctx.moveTo(points[startIdx].x, points[startIdx].y);
-        
-        for (let i = startIdx + 1; i < points.length; i++) {
-            ctx.lineTo(points[i].x, points[i].y);
+        // If partial progress, interpolate the end point
+        if (partialProgress !== undefined && partialProgress < 1) {
+            const fullEndX = endPt.x;
+            const fullEndY = endPt.y;
+            const progressX = startPt.x + (fullEndX - startPt.x) * partialProgress;
+            const progressY = startPt.y + (fullEndY - startPt.y) * partialProgress;
+            endPt = { x: progressX, y: progressY };
         }
+        
+        ctx.beginPath();
+        ctx.moveTo(startPt.x, startPt.y);
+        ctx.lineTo(endPt.x, endPt.y);
+        ctx.strokeStyle = style;
+        ctx.lineWidth = lineWidth;
+        ctx.setLineDash(dashed ? [8, 8] : []);
         ctx.stroke();
+    };
+    
+    // Draw completed segments (solid purple)
+    for (let i = 0; i < currentIndex && i < points.length - 1; i++) {
+        drawSegment(i, i + 1, COLORS.mpPurple, 3, false);
+    }
+    
+    // Draw current transition animation
+    if (currentIndex < points.length - 1 && animationProgress > 0 && animationProgress < 1) {
+        drawSegment(currentIndex, currentIndex + 1, COLORS.mpPurpleGlow, 3, false, animationProgress);
+    }
+    
+    // Draw remaining segments (dashed, faded)
+    const startIdx = animationProgress >= 1 ? currentIndex : currentIndex + 1;
+    for (let i = startIdx; i < points.length - 1; i++) {
+        drawSegment(i, i + 1, 'rgba(125, 0, 255, 0.3)', 2, true);
     }
     
     ctx.restore();
