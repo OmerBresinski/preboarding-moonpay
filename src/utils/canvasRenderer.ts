@@ -2,6 +2,48 @@
 
 import type { MoonBaseInfo } from './moonbases';
 
+// Image cache for map images
+const imageCache: Map<string, HTMLImageElement> = new Map();
+const loadingImages: Map<string, Promise<HTMLImageElement>> = new Map();
+
+// Preload an image
+export const preloadImage = (src: string): Promise<HTMLImageElement> => {
+    // Return cached image if available
+    const cached = imageCache.get(src);
+    if (cached) {
+        return Promise.resolve(cached);
+    }
+    
+    // Return existing loading promise if already loading
+    const loading = loadingImages.get(src);
+    if (loading) {
+        return loading;
+    }
+    
+    // Start loading the image
+    const promise = new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            imageCache.set(src, img);
+            loadingImages.delete(src);
+            resolve(img);
+        };
+        img.onerror = () => {
+            loadingImages.delete(src);
+            reject(new Error(`Failed to load image: ${src}`));
+        };
+        img.src = src;
+    });
+    
+    loadingImages.set(src, promise);
+    return promise;
+};
+
+// Get cached image (returns null if not loaded)
+export const getCachedImage = (src: string): HTMLImageElement | null => {
+    return imageCache.get(src) || null;
+};
+
 // MoonPay brand colors
 export const COLORS = {
     mpPurple: '#7D00FF',
@@ -81,7 +123,7 @@ export const drawSpaceBackground = (
     }
 };
 
-// Draw stylized country map
+// Draw stylized country map (supports both SVG paths and images)
 export const drawCountryMap = (
     ctx: CanvasRenderingContext2D,
     moonbase: MoonBaseInfo,
@@ -92,6 +134,34 @@ export const drawCountryMap = (
     isCompleted: boolean = false
 ): void => {
     ctx.save();
+    
+    // Check if we have an image for this moonbase
+    if (moonbase.mapImage) {
+        const img = getCachedImage(moonbase.mapImage);
+        if (img) {
+            // Draw the image
+            const imgWidth = img.width * scale;
+            const imgHeight = img.height * scale;
+            
+            // Apply effects based on state
+            if (isActive) {
+                ctx.shadowColor = COLORS.mpPurple;
+                ctx.shadowBlur = 20;
+            } else if (isCompleted) {
+                ctx.globalAlpha = 0.7;
+            } else {
+                ctx.globalAlpha = 0.5;
+            }
+            
+            ctx.drawImage(img, x, y, imgWidth, imgHeight);
+            ctx.restore();
+            return;
+        }
+        // If image not loaded yet, try to load it (fallback to path below)
+        preloadImage(moonbase.mapImage);
+    }
+    
+    // Fallback: Draw SVG path
     ctx.translate(x, y);
     ctx.scale(scale, scale);
     

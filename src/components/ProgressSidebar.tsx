@@ -5,20 +5,11 @@ import { MOONBASE_DATA } from '../utils/moonbases';
 interface ProgressSidebarProps {
     currentIndex: number;
     isFlying: boolean;
-    moonRevealed?: boolean;
 }
 
-const NYC_INDEX = 4;
-
-const ProgressSidebar: React.FC<ProgressSidebarProps> = ({ currentIndex, isFlying, moonRevealed }) => {
-    // Moon is revealed when we reach NYC or later
-    const isMoonVisible = moonRevealed ?? currentIndex >= NYC_INDEX;
-    
-    // Filter out moon if not revealed, then reverse the order so Moon is at top, London at bottom
-    const filteredLocations = isMoonVisible 
-        ? MOONBASE_ORDER 
-        : MOONBASE_ORDER.filter(loc => loc !== 'moon');
-    const reversedLocations = [...filteredLocations].reverse();
+const ProgressSidebar: React.FC<ProgressSidebarProps> = ({ currentIndex, isFlying }) => {
+    // Reverse the order so NYC is at top, London at bottom
+    const reversedLocations = [...MOONBASE_ORDER].reverse();
     
     return (
         <div style={styles.container}>
@@ -29,8 +20,8 @@ const ProgressSidebar: React.FC<ProgressSidebarProps> = ({ currentIndex, isFlyin
             
             <div style={styles.roadmap}>
                 {reversedLocations.map((location, reversedIndex) => {
-                    // Convert back to original index (0 = london, 5 = moon)
-                    const originalIndex = MOONBASE_ORDER.length - 1 - reversedIndex;
+                    // Convert back to original index (0 = london, 4 = new-york)
+                    const originalIndex = MOONBASE_ORDER.indexOf(location);
                     const moonbase = MOONBASE_DATA[location];
                     const isCompleted = originalIndex < currentIndex;
                     const isCurrent = originalIndex === currentIndex;
@@ -143,12 +134,12 @@ const ProgressSidebar: React.FC<ProgressSidebarProps> = ({ currentIndex, isFlyin
                     <div 
                         style={{
                             ...styles.progressFill,
-                            height: `${(currentIndex / (filteredLocations.length - 1)) * 100}%`
+                            height: `${(currentIndex / (MOONBASE_ORDER.length - 1)) * 100}%`
                         }}
                     />
                 </div>
                 <span style={styles.progressText}>
-                    {currentIndex}/{filteredLocations.length - 1} stops
+                    {currentIndex}/{MOONBASE_ORDER.length - 1} stops
                 </span>
             </div>
         </div>

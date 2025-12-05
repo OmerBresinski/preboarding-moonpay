@@ -11,7 +11,8 @@ import {
     calculateJumpArcPosition,
     drawJumpTrail,
     initStarField,
-    easing
+    easing,
+    preloadImage
 } from '../utils/canvasRenderer';
 import { drawCharacterSprite, getSpriteSize, type CharacterPreset } from '../utils/characterSprites';
 
@@ -46,13 +47,6 @@ const GameCanvas2D = ({
         fromPhase: 'character-creation'
     });
     const lastPhaseRef = useRef(gameState.phase);
-    
-    // Track moon reveal animation (moon appears after NYC is completed)
-    const moonRevealRef = useRef<{ active: boolean; startTime: number; revealed: boolean }>({
-        active: false,
-        startTime: 0,
-        revealed: false
-    });
 
     // Get canvas positions for all locations based on canvas size
     const getLocationCanvasPositions = useCallback((width: number, height: number) => {
@@ -79,6 +73,17 @@ const GameCanvas2D = ({
             x: loc.x - spriteSize.width / 2,
             y: loc.y - mapHeight / 2 - spriteSize.height - 15
         };
+    }, []);
+
+    // Preload map images on mount
+    useEffect(() => {
+        // Preload any map images
+        MOONBASE_ORDER.forEach(loc => {
+            const moonbase = MOONBASE_DATA[loc];
+            if (moonbase.mapImage) {
+                preloadImage(moonbase.mapImage);
+            }
+        });
     }, []);
 
     // Initialize stars on mount and resize
@@ -122,25 +127,6 @@ const GameCanvas2D = ({
                 introTransitionRef.current = { active: true, startTime: time, fromPhase: 'character-creation' };
             }
             lastPhaseRef.current = gameState.phase;
-            
-            // Detect when we reach NYC (index 4) to trigger moon reveal
-            // Moon reveals when we arrive at NYC (currentLocationIndex becomes 4)
-            const NYC_INDEX = 4;
-            const MOON_INDEX = 5;
-            if (!moonRevealRef.current.revealed && gameState.currentLocationIndex >= NYC_INDEX && !isFlying) {
-                moonRevealRef.current = { active: true, startTime: time, revealed: true };
-            }
-            
-            // Calculate moon reveal progress
-            const MOON_REVEAL_DURATION = 1500; // 1.5 seconds for moon to slide in
-            let moonRevealProgress = moonRevealRef.current.revealed ? 1 : 0;
-            if (moonRevealRef.current.active) {
-                const elapsed = time - moonRevealRef.current.startTime;
-                moonRevealProgress = Math.min(elapsed / MOON_REVEAL_DURATION, 1);
-                if (moonRevealProgress >= 1) {
-                    moonRevealRef.current.active = false;
-                }
-            }
 
             // Clear canvas
             ctx.clearRect(0, 0, width, height);
@@ -179,20 +165,11 @@ const GameCanvas2D = ({
                 const progressIndex = isFlying ? previousLocationIndex : gameState.currentLocationIndex;
                 
                 // Draw progress path connecting all locations (horizontal line)
-                // Only include moon in path if it's revealed
-                const pathPoints = locations
-                    .filter((_, index) => index !== MOON_INDEX || moonRevealRef.current.revealed)
-                    .map(loc => ({ x: loc.x, y: loc.y }));
-                drawProgressPath(ctx, pathPoints, Math.min(progressIndex, pathPoints.length - 1), isFlying ? transitionProgressRef.current : 0);
+                const pathPoints = locations.map(loc => ({ x: loc.x, y: loc.y }));
+                drawProgressPath(ctx, pathPoints, progressIndex, isFlying ? transitionProgressRef.current : 0);
                 
                 // Draw all locations
                 locations.forEach((loc, index) => {
-                    // Skip the moon if not yet revealed
-                    const isMoon = index === MOON_INDEX;
-                    if (isMoon && !moonRevealRef.current.revealed && moonRevealProgress === 0) {
-                        return; // Don't draw moon yet
-                    }
-                    
                     // When flying, the "active" location is where we're coming FROM
                     const isActive = isFlying ? index === previousLocationIndex : index === gameState.currentLocationIndex;
                     const isCompleted = index < (isFlying ? previousLocationIndex : gameState.currentLocationIndex);
@@ -201,34 +178,15 @@ const GameCanvas2D = ({
                     // Use the moonbase's own scale multiplied by base scale
                     const mapScale = baseScale * loc.moonbase.mapScale;
                     
-                    // Calculate map dimensions for centering (approximate based on 100x100 viewbox)
-                    const mapWidth = 100 * mapScale;
-                    const mapHeight = 100 * mapScale;
+                    // Calculate map dimensions - using larger base for image maps
+                    const mapWidth = 800 * mapScale;
+                    const mapHeight = 800 * mapScale;
                     
-                    // Calculate position - moon slides in from the right
-                    let drawX = loc.x - mapWidth / 2;
+                    // Calculate position - center the map on the location point
+                    const drawX = loc.x - mapWidth / 2;
                     const drawY = loc.y - mapHeight / 2;
-                    let moonAlpha = 1;
                     
-                    if (isMoon && moonRevealProgress < 1) {
-                        // Animate moon sliding in from the right with easing
-                        const easedProgress = easing.easeOut(moonRevealProgress);
-                        const offscreenX = width + mapWidth; // Start off screen to the right
-                        drawX = offscreenX + (loc.x - mapWidth / 2 - offscreenX) * easedProgress;
-                        moonAlpha = easedProgress;
-                        
-                        // Add a slight scale-up effect as it comes in
-                        ctx.save();
-                        const scaleEffect = 0.8 + 0.2 * easedProgress;
-                        const centerX = drawX + mapWidth / 2;
-                        const centerY = drawY + mapHeight / 2;
-                        ctx.translate(centerX, centerY);
-                        ctx.scale(scaleEffect, scaleEffect);
-                        ctx.translate(-centerX, -centerY);
-                        ctx.globalAlpha = moonAlpha;
-                    }
-                    
-                    // Draw country/moon map - centered on position
+                    // Draw country map
                     drawCountryMap(
                         ctx,
                         loc.moonbase,
@@ -242,15 +200,11 @@ const GameCanvas2D = ({
                     // Draw pin marker at the pin offset position
                     const pinX = drawX + loc.moonbase.pinOffset.x * mapWidth;
                     const pinY = drawY + loc.moonbase.pinOffset.y * mapHeight;
-                    drawMoonPayPin(ctx, pinX, pinY, isMoon ? 1.2 : 0.7, isActive, time / 500);
+                    drawMoonPayPin(ctx, pinX, pinY, 0.7, isActive, time / 500);
                     
                     // Draw label below the location
                     const labelY = drawY + mapHeight + 30;
                     drawOfficeLabel(ctx, loc.moonbase, drawX + mapWidth / 2, labelY, isHovered);
-                    
-                    if (isMoon && moonRevealProgress < 1) {
-                        ctx.restore();
-                    }
                 });
                 
                 ctx.globalAlpha = 1;

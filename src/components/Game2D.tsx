@@ -25,10 +25,6 @@ const Game2D = () => {
     const [previousLocationIndex, setPreviousLocationIndex] = useState(0);
     const [selectedPreset, setSelectedPreset] = useState<CharacterPreset>(CHARACTER_PRESETS[0]);
     const [showVictoryScreen, setShowVictoryScreen] = useState<1 | 2 | null>(null);
-    const [moonRevealed, setMoonRevealed] = useState(false);
-    
-    // NYC index - moon reveals when we arrive here
-    const NYC_INDEX = 4;
     
     // Animation progress ref
     const transitionProgressRef = useRef<number>(0);
@@ -44,16 +40,11 @@ const Game2D = () => {
         setIsFlying(false);
         transitionProgressRef.current = 0;
         
-        // Reveal moon when we arrive at NYC
-        if (gameState.currentLocationIndex >= NYC_INDEX && !moonRevealed) {
-            setMoonRevealed(true);
-        }
-        
-        // Check if we reached the moon
+        // Check if we reached the final destination (NYC)
         if (gameState.phase === 'victory') {
             setShowVictoryScreen(1);
         }
-    }, [gameState.phase, gameState.currentLocationIndex, moonRevealed]);
+    }, [gameState.phase]);
     
     // Handle correct answer
     const handleAnswer = useCallback((isCorrect: boolean) => {
@@ -126,7 +117,6 @@ const Game2D = () => {
                 <ProgressSidebar
                     currentIndex={gameState.currentLocationIndex}
                     isFlying={isFlying}
-                    moonRevealed={moonRevealed}
                 />
             )}
             
