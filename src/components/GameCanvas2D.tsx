@@ -325,9 +325,9 @@ const GameCanvas2D = ({
                     const isCompleted = index < (isFlying ? previousLocationIndex : gameState.currentLocationIndex);
                     const isHovered = hoveredLocation === loc.id;
                     
-                    // Smooth hover intensity transition
+                    // Smooth hover/active intensity transition (active maps are highlighted like hovered)
                     const currentIntensity = hoverIntensityRef.current[loc.id] || 0;
-                    const targetIntensity = isHovered ? 1 : 0;
+                    const targetIntensity = (isHovered || isActive) ? 1 : 0;
                     const newIntensity = currentIntensity + (targetIntensity - currentIntensity) * 0.15;
                     hoverIntensityRef.current[loc.id] = newIntensity;
                     
