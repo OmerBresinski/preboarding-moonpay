@@ -373,6 +373,19 @@ export const getCharacterPreset = (id: number): CharacterPreset => {
     return CHARACTER_PRESETS[id] || CHARACTER_PRESETS[0];
 };
 
+// State for smooth interpolation of cursor tracking effects
+const cursorTrackingState = {
+    currentLeanAngle: 0,
+    currentEyeOffsetX: 0,
+    currentEyeOffsetY: 0,
+    lastUpdateTime: 0
+};
+
+// Smooth lerp function
+const lerp = (current: number, target: number, factor: number): number => {
+    return current + (target - current) * factor;
+};
+
 // Draw character sprite to canvas at given position and scale
 export const drawCharacterSprite = (
     ctx: CanvasRenderingContext2D,
@@ -395,10 +408,10 @@ export const drawCharacterSprite = (
     const charCenterX = x + charWidth / 2;
     const charCenterY = y + charHeight / 2;
     
-    // Calculate lean angle based on mouse position (subtle body rotation)
-    let leanAngle = 0;
-    let eyeOffsetX = 0;
-    let eyeOffsetY = 0;
+    // Calculate TARGET lean angle and eye offset based on mouse position
+    let targetLeanAngle = 0;
+    let targetEyeOffsetX = 0;
+    let targetEyeOffsetY = 0;
     
     if (mousePosition) {
         const dx = mousePosition.x - charCenterX;
@@ -407,33 +420,49 @@ export const drawCharacterSprite = (
         
         if (distance > 10) { // Only track if mouse is far enough
             // Subtle body lean toward cursor (max 3 degrees)
-            leanAngle = Math.atan2(dx, -Math.abs(dy)) * 0.05; // Very subtle lean
-            leanAngle = Math.max(-0.05, Math.min(0.05, leanAngle)); // Clamp to ~3 degrees
+            targetLeanAngle = Math.atan2(dx, -Math.abs(dy)) * 0.05; // Very subtle lean
+            targetLeanAngle = Math.max(-0.05, Math.min(0.05, targetLeanAngle)); // Clamp to ~3 degrees
             
             // Eye pupil offset (max 1-2 pixels)
             const maxEyeOffset = pixelSize * 0.8;
             const normalizedDx = dx / (distance + 1);
             const normalizedDy = dy / (distance + 1);
-            eyeOffsetX = normalizedDx * maxEyeOffset;
-            eyeOffsetY = normalizedDy * maxEyeOffset * 0.5; // Less vertical movement
+            targetEyeOffsetX = normalizedDx * maxEyeOffset;
+            targetEyeOffsetY = normalizedDy * maxEyeOffset * 0.5; // Less vertical movement
         }
     }
+    
+    // Smooth interpolation factor (lower = smoother but slower)
+    const smoothFactor = 0.12;
+    
+    // Smoothly interpolate current values toward target values
+    cursorTrackingState.currentLeanAngle = lerp(cursorTrackingState.currentLeanAngle, targetLeanAngle, smoothFactor);
+    cursorTrackingState.currentEyeOffsetX = lerp(cursorTrackingState.currentEyeOffsetX, targetEyeOffsetX, smoothFactor);
+    cursorTrackingState.currentEyeOffsetY = lerp(cursorTrackingState.currentEyeOffsetY, targetEyeOffsetY, smoothFactor);
+    
+    // Use the smoothed values
+    const leanAngle = cursorTrackingState.currentLeanAngle;
+    const eyeOffsetX = cursorTrackingState.currentEyeOffsetX;
+    const eyeOffsetY = cursorTrackingState.currentEyeOffsetY;
     
     ctx.save();
     
     // Apply lean rotation around character center
-    if (leanAngle !== 0) {
+    if (Math.abs(leanAngle) > 0.001) {
         ctx.translate(charCenterX, charCenterY);
         ctx.rotate(leanAngle);
         ctx.translate(-charCenterX, -charCenterY);
     }
+    
+    // Track eye offset for flipped state
+    let finalEyeOffsetX = eyeOffsetX;
     
     if (flipX) {
         ctx.translate(x + charWidth, y);
         ctx.scale(-1, 1);
         x = 0;
         y = 0;
-        eyeOffsetX = -eyeOffsetX; // Flip eye offset too
+        finalEyeOffsetX = -finalEyeOffsetX; // Flip eye offset too
     }
     
     // Draw jetpack BEHIND the character (drawn first so character overlaps)
@@ -441,11 +470,31 @@ export const drawCharacterSprite = (
         drawJetpack(ctx, x, y, pixelSize, spriteData[0].length, palette[1], time);
     }
     
+    // Find eye positions BEFORE drawing (for skipping static eyes)
+    const eyeRow = 5;
+    const eyeColorIndices = [5, 6, 7];
+    const eyeColumns: Set<number> = new Set();
+    
+    if (mousePosition) {
+        // Find all columns in the eye row that have eye-colored pixels
+        for (let col = 0; col < spriteData[eyeRow].length; col++) {
+            const colorIndex = spriteData[eyeRow][col];
+            if (eyeColorIndices.includes(colorIndex)) {
+                eyeColumns.add(col);
+            }
+        }
+    }
+    
     // Draw character sprite
     for (let row = 0; row < spriteData.length; row++) {
         for (let col = 0; col < spriteData[row].length; col++) {
             const colorIndex = spriteData[row][col];
             if (colorIndex === 0) continue;
+            
+            // Skip eye pixels if we're drawing animated eyes (skip the EXACT eye positions)
+            if (mousePosition && row === eyeRow && eyeColumns.has(col)) {
+                continue;
+            }
             
             const color = palette[colorIndex];
             if (color === 'transparent') continue;
@@ -462,7 +511,7 @@ export const drawCharacterSprite = (
     
     // Draw animated eye pupils that follow the cursor
     if (mousePosition) {
-        drawEyePupils(ctx, x, y, pixelSize, spriteData, eyeOffsetX, eyeOffsetY);
+        drawEyePupils(ctx, x, y, pixelSize, spriteData, palette, finalEyeOffsetX, eyeOffsetY);
     }
     
     ctx.restore();
@@ -475,31 +524,29 @@ const drawEyePupils = (
     y: number,
     pixelSize: number,
     spriteData: number[][],
+    palette: string[],
     offsetX: number,
     offsetY: number
 ): void => {
-    // Find eye positions in the sprite (typically row 5, looking for colorIndex 5 which is the darker pupil area)
-    // The visor is around rows 4-6, and eyes are at columns where colorIndex is 5
+    // Find eye positions in the sprite (typically row 5, looking for darker pixels in the visor)
+    // The visor is around rows 4-6, and eyes can be colorIndex 5, 6, or 7 depending on the sprite variant
     const eyeRow = 5; // Row with eyes
-    const eyePositions: number[] = [];
     
-    // Find eye column positions (look for colorIndex 5 which typically represents darker pixels in visor)
+    // Different sprites use different color indices for eyes (5, 6, or 7)
+    // Look for these indices in the eye row
+    const eyeColorIndices = [5, 6, 7];
+    
+    // Draw ALL eye pixels with offset (not just first and last)
+    // This handles sprites with single-pixel eyes AND double-pixel eyes
     for (let col = 0; col < spriteData[eyeRow].length; col++) {
-        if (spriteData[eyeRow][col] === 5) {
-            eyePositions.push(col);
+        const colorIndex = spriteData[eyeRow][col];
+        if (eyeColorIndices.includes(colorIndex)) {
+            const eyeColor = palette[colorIndex];
+            ctx.fillStyle = eyeColor;
+            const pupilX = x + col * pixelSize + offsetX;
+            const pupilY = y + eyeRow * pixelSize + offsetY;
+            ctx.fillRect(pupilX, pupilY, pixelSize, pixelSize);
         }
-    }
-    
-    // Draw pupils at each eye position with offset
-    ctx.fillStyle = '#000000';
-    for (const col of eyePositions) {
-        const pupilX = x + col * pixelSize + pixelSize / 2 + offsetX;
-        const pupilY = y + eyeRow * pixelSize + pixelSize / 2 + offsetY;
-        const pupilSize = pixelSize * 0.5;
-        
-        ctx.beginPath();
-        ctx.arc(pupilX, pupilY, pupilSize, 0, Math.PI * 2);
-        ctx.fill();
     }
 };
 
