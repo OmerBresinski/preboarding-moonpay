@@ -465,3 +465,130 @@ export const easing = {
     },
 };
 
+// Shimmer particle for cursor effect
+interface ShimmerParticle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    life: number;
+    maxLife: number;
+    size: number;
+    color: string;
+}
+
+// Shimmer particles pool
+let shimmerParticles: ShimmerParticle[] = [];
+
+// Draw cursor shimmer effect at a position
+export const drawCursorShimmer = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    time: number,
+    isActive: boolean = true
+): void => {
+    if (!isActive) return;
+    
+    ctx.save();
+    
+    // Spawn new particles occasionally
+    if (Math.random() < 0.3) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 1.5 + 0.5;
+        shimmerParticles.push({
+            x: x + (Math.random() - 0.5) * 20,
+            y: y + (Math.random() - 0.5) * 20,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 1, // Slight upward bias
+            life: 1,
+            maxLife: 1,
+            size: Math.random() * 4 + 2,
+            color: Math.random() > 0.5 ? COLORS.mpPurpleLight : COLORS.mpPurpleGlow,
+        });
+    }
+    
+    // Limit particles
+    if (shimmerParticles.length > 30) {
+        shimmerParticles = shimmerParticles.slice(-30);
+    }
+    
+    // Update and draw particles
+    shimmerParticles = shimmerParticles.filter(p => {
+        // Update position
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.02;
+        
+        if (p.life <= 0) return false;
+        
+        // Draw particle
+        const alpha = p.life * 0.8;
+        const size = p.size * p.life;
+        
+        // Glowing particle
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba').replace('#', '');
+        
+        // Convert hex to rgba
+        const hex = p.color.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        ctx.fill();
+        
+        // Add glow
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size * 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.3})`;
+        ctx.fill();
+        
+        return true;
+    });
+    
+    // Draw main shimmer ring at cursor
+    const ringPulse = Math.sin(time * 4) * 0.3 + 0.7;
+    const ringSize = 15 * ringPulse;
+    
+    // Outer glow
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, ringSize * 2);
+    gradient.addColorStop(0, 'rgba(125, 0, 255, 0.3)');
+    gradient.addColorStop(0.5, 'rgba(153, 51, 255, 0.15)');
+    gradient.addColorStop(1, 'rgba(125, 0, 255, 0)');
+    
+    ctx.beginPath();
+    ctx.arc(x, y, ringSize * 2, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    
+    // Inner ring
+    ctx.beginPath();
+    ctx.arc(x, y, ringSize, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(179, 102, 255, ${0.5 * ringPulse})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Sparkle points around the ring
+    const numSparkles = 6;
+    for (let i = 0; i < numSparkles; i++) {
+        const angle = (i / numSparkles) * Math.PI * 2 + time * 2;
+        const sparkleX = x + Math.cos(angle) * ringSize * 1.2;
+        const sparkleY = y + Math.sin(angle) * ringSize * 1.2;
+        const sparkleSize = 2 + Math.sin(time * 3 + i) * 1;
+        
+        ctx.beginPath();
+        ctx.arc(sparkleX, sparkleY, sparkleSize, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.6 + Math.sin(time * 4 + i) * 0.3})`;
+        ctx.fill();
+    }
+    
+    ctx.restore();
+};
+
+// Clear shimmer particles (call when hover ends)
+export const clearShimmerParticles = (): void => {
+    shimmerParticles = [];
+};
+

@@ -383,18 +383,57 @@ export const drawCharacterSprite = (
     flipX: boolean = false,
     _isFlying: boolean = false, // Kept for API compatibility, flames always on now
     time: number = 0,
-    showJetpack: boolean = true
+    showJetpack: boolean = true,
+    mousePosition?: { x: number; y: number } // Optional mouse position for eye/body tracking
 ): void => {
     const { spriteData, palette } = preset;
     const pixelSize = scale;
     
+    // Calculate character center for cursor tracking
+    const charWidth = spriteData[0].length * pixelSize;
+    const charHeight = spriteData.length * pixelSize;
+    const charCenterX = x + charWidth / 2;
+    const charCenterY = y + charHeight / 2;
+    
+    // Calculate lean angle based on mouse position (subtle body rotation)
+    let leanAngle = 0;
+    let eyeOffsetX = 0;
+    let eyeOffsetY = 0;
+    
+    if (mousePosition) {
+        const dx = mousePosition.x - charCenterX;
+        const dy = mousePosition.y - charCenterY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 10) { // Only track if mouse is far enough
+            // Subtle body lean toward cursor (max 3 degrees)
+            leanAngle = Math.atan2(dx, -Math.abs(dy)) * 0.05; // Very subtle lean
+            leanAngle = Math.max(-0.05, Math.min(0.05, leanAngle)); // Clamp to ~3 degrees
+            
+            // Eye pupil offset (max 1-2 pixels)
+            const maxEyeOffset = pixelSize * 0.8;
+            const normalizedDx = dx / (distance + 1);
+            const normalizedDy = dy / (distance + 1);
+            eyeOffsetX = normalizedDx * maxEyeOffset;
+            eyeOffsetY = normalizedDy * maxEyeOffset * 0.5; // Less vertical movement
+        }
+    }
+    
     ctx.save();
     
+    // Apply lean rotation around character center
+    if (leanAngle !== 0) {
+        ctx.translate(charCenterX, charCenterY);
+        ctx.rotate(leanAngle);
+        ctx.translate(-charCenterX, -charCenterY);
+    }
+    
     if (flipX) {
-        ctx.translate(x + spriteData[0].length * pixelSize, y);
+        ctx.translate(x + charWidth, y);
         ctx.scale(-1, 1);
         x = 0;
         y = 0;
+        eyeOffsetX = -eyeOffsetX; // Flip eye offset too
     }
     
     // Draw jetpack BEHIND the character (drawn first so character overlaps)
@@ -421,7 +460,47 @@ export const drawCharacterSprite = (
         }
     }
     
+    // Draw animated eye pupils that follow the cursor
+    if (mousePosition) {
+        drawEyePupils(ctx, x, y, pixelSize, spriteData, eyeOffsetX, eyeOffsetY);
+    }
+    
     ctx.restore();
+};
+
+// Draw eye pupils that track the cursor
+const drawEyePupils = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    pixelSize: number,
+    spriteData: number[][],
+    offsetX: number,
+    offsetY: number
+): void => {
+    // Find eye positions in the sprite (typically row 5, looking for colorIndex 5 which is the darker pupil area)
+    // The visor is around rows 4-6, and eyes are at columns where colorIndex is 5
+    const eyeRow = 5; // Row with eyes
+    const eyePositions: number[] = [];
+    
+    // Find eye column positions (look for colorIndex 5 which typically represents darker pixels in visor)
+    for (let col = 0; col < spriteData[eyeRow].length; col++) {
+        if (spriteData[eyeRow][col] === 5) {
+            eyePositions.push(col);
+        }
+    }
+    
+    // Draw pupils at each eye position with offset
+    ctx.fillStyle = '#000000';
+    for (const col of eyePositions) {
+        const pupilX = x + col * pixelSize + pixelSize / 2 + offsetX;
+        const pupilY = y + eyeRow * pixelSize + pixelSize / 2 + offsetY;
+        const pupilSize = pixelSize * 0.5;
+        
+        ctx.beginPath();
+        ctx.arc(pupilX, pupilY, pupilSize, 0, Math.PI * 2);
+        ctx.fill();
+    }
 };
 
 // Draw jetpack with animated flames (positioned behind character, visible from multiple angles)

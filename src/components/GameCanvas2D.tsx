@@ -11,7 +11,9 @@ import {
     drawJumpTrail,
     initStarField,
     easing,
-    preloadImage
+    preloadImage,
+    drawCursorShimmer,
+    clearShimmerParticles
 } from '../utils/canvasRenderer';
 import { drawCharacterSprite, getSpriteSize, type CharacterPreset } from '../utils/characterSprites';
 
@@ -63,6 +65,9 @@ const GameCanvas2D = ({
     });
     const ZOOM_IN = 1.6; // Zoom level when focused on a moonbase
     const ZOOM_OUT = 1.0; // Zoom level when showing all moonbases
+    
+    // Mouse position in world coordinates (for character interaction)
+    const mousePositionRef = useRef<{ worldX: number; worldY: number; screenX: number; screenY: number } | null>(null);
 
     // Get canvas positions for all locations based on canvas size
     const getLocationCanvasPositions = useCallback((width: number, height: number) => {
@@ -78,15 +83,17 @@ const GameCanvas2D = ({
     }, []);
 
     // Calculate character position for a given location (consistent positioning)
+    // Character is offset to the left so the moonbase image is more visible
     const getCharacterPositionAtLocation = useCallback((
         loc: { x: number; y: number; moonbase: MoonBaseInfo },
         spriteSize: { width: number; height: number },
         baseScale: number
     ) => {
         const mapScale = baseScale * loc.moonbase.mapScale;
+        const mapWidth = 800 * mapScale;
         const mapHeight = 100 * mapScale;
         return {
-            x: loc.x - spriteSize.width / 2,
+            x: loc.x - spriteSize.width / 2 - mapWidth * 0.25, // Offset left by 25% of map width
             y: loc.y - mapHeight / 2 - spriteSize.height - 15
         };
     }, []);
@@ -255,6 +262,17 @@ const GameCanvas2D = ({
                     const labelY = drawY + mapHeight + 30;
                     const tooltipY = drawY - 20; // Position tooltip above the map
                     drawOfficeLabel(ctx, loc.moonbase, drawX + mapWidth / 2, labelY, isHovered, tooltipY);
+                    
+                    // Draw shimmer effect at cursor when hovering over moonbase
+                    if (isHovered && mousePositionRef.current) {
+                        drawCursorShimmer(
+                            ctx,
+                            mousePositionRef.current.worldX,
+                            mousePositionRef.current.worldY,
+                            time / 1000,
+                            true
+                        );
+                    }
                 });
                 
                 ctx.globalAlpha = 1;
@@ -320,7 +338,8 @@ const GameCanvas2D = ({
                         endLoc.x < startLoc.x, // Flip if moving left
                         true, // isFlying - show jetpack flames
                         time,
-                        true // showJetpack
+                        true, // showJetpack
+                        mousePositionRef.current ? { x: mousePositionRef.current.worldX, y: mousePositionRef.current.worldY } : undefined
                     );
                     
                     // Check if animation complete
@@ -359,7 +378,8 @@ const GameCanvas2D = ({
                         false,
                         false,
                         time,
-                        true
+                        true,
+                        mousePositionRef.current ? { x: mousePositionRef.current.worldX, y: mousePositionRef.current.worldY } : undefined
                     );
                 } else {
                     // Normal idle state at current location with hover animation
@@ -377,7 +397,8 @@ const GameCanvas2D = ({
                         false,
                         false,
                         time,
-                        true // Show jetpack
+                        true, // Show jetpack
+                        mousePositionRef.current ? { x: mousePositionRef.current.worldX, y: mousePositionRef.current.worldY } : undefined
                     );
                 }
                 
@@ -390,6 +411,7 @@ const GameCanvas2D = ({
                 
                 // Character creation: draw character BIG and CENTERED with hover
                 const spriteSize = getSpriteSize(characterPreset, creationScale);
+                // In character creation, use screen coordinates since no camera transform
                 drawCharacterSprite(
                     ctx,
                     characterPreset,
@@ -399,7 +421,8 @@ const GameCanvas2D = ({
                     false,
                     false,
                     time,
-                    true // Show jetpack
+                    true, // Show jetpack
+                    mousePositionRef.current ? { x: mousePositionRef.current.screenX, y: mousePositionRef.current.screenY } : undefined
                 );
             }
             
@@ -426,7 +449,7 @@ const GameCanvas2D = ({
         transitionProgressRef
     ]);
 
-    // Mouse move handler for hover effects
+    // Mouse move handler for hover effects and cursor tracking
     const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -439,6 +462,9 @@ const GameCanvas2D = ({
         const camera = cameraRef.current;
         const worldX = (screenX - canvas.width / 2) / camera.zoom + camera.currentX;
         const worldY = (screenY - canvas.height / 2) / camera.zoom + camera.currentY;
+        
+        // Store mouse position for character interaction
+        mousePositionRef.current = { worldX, worldY, screenX, screenY };
         
         const locations = getLocationCanvasPositions(canvas.width, canvas.height);
         
@@ -464,6 +490,7 @@ const GameCanvas2D = ({
         
         if (!foundHover) {
             setHoveredLocation(null);
+            clearShimmerParticles();
         }
     }, [getLocationCanvasPositions]);
 
