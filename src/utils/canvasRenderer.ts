@@ -140,33 +140,34 @@ export const drawCountryMap = (
     if (moonbase.mapImage) {
         const img = getCachedImage(moonbase.mapImage);
         if (img) {
-            // Draw the image
-            const imgWidth = img.width * scale;
-            const imgHeight = img.height * scale;
+            // Calculate base dimensions
+            let imgWidth = img.width * scale;
+            let imgHeight = img.height * scale;
+            let drawX = x;
+            let drawY = y;
             
-            // Apply effects based on state
+            // Scale up by 1.05x when hovered (centered)
             if (isHovered) {
-                // White outline glow when hovered
-                ctx.shadowColor = '#FFFFFF';
-                ctx.shadowBlur = 25;
+                const hoverScale = 1.05;
+                const newWidth = imgWidth * hoverScale;
+                const newHeight = imgHeight * hoverScale;
+                // Adjust position to keep centered
+                drawX = x - (newWidth - imgWidth) / 2;
+                drawY = y - (newHeight - imgHeight) / 2;
+                imgWidth = newWidth;
+                imgHeight = newHeight;
+            }
+            
+            // Apply alpha based on state
+            if (isActive || isHovered) {
                 ctx.globalAlpha = 1;
-            } else if (isActive) {
-                ctx.shadowColor = COLORS.mpPurple;
-                ctx.shadowBlur = 20;
             } else if (isCompleted) {
                 ctx.globalAlpha = 0.7;
             } else {
                 ctx.globalAlpha = 0.5;
             }
             
-            ctx.drawImage(img, x, y, imgWidth, imgHeight);
-            
-            // Draw again for stronger glow effect when hovered
-            if (isHovered) {
-                ctx.shadowBlur = 40;
-                ctx.globalAlpha = 0.5;
-                ctx.drawImage(img, x, y, imgWidth, imgHeight);
-            }
+            ctx.drawImage(img, drawX, drawY, imgWidth, imgHeight);
             
             ctx.restore();
             return;

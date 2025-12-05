@@ -66,14 +66,26 @@ const GameCanvas2D = ({
     
     // Mouse position in world coordinates (for character interaction)
     const mousePositionRef = useRef<{ worldX: number; worldY: number; screenX: number; screenY: number } | null>(null);
+    
+    // Moon reveal animation - slides in from right after completing NYC (index 4)
+    const moonRevealRef = useRef<{ revealed: boolean; animatedX: number }>({
+        revealed: false,
+        animatedX: 1.15 // Start off-screen
+    });
+    const MOON_TARGET_X = 0.92; // Target position when revealed
+    const NYC_INDEX = 4; // NYC is at index 4, moon reveals after completing it
 
     // Get canvas positions for all locations based on canvas size
     const getLocationCanvasPositions = useCallback((width: number, height: number) => {
-        return MOONBASE_ORDER.map(loc => {
+        return MOONBASE_ORDER.map((loc) => {
             const moonbase = MOONBASE_DATA[loc];
+            // For the moon (last location), use animated X position
+            const xPosition = loc === 'moon' 
+                ? moonRevealRef.current.animatedX 
+                : moonbase.canvasPosition.x;
             return {
                 id: loc,
-                x: moonbase.canvasPosition.x * width,
+                x: xPosition * width,
                 y: moonbase.canvasPosition.y * height,
                 moonbase
             };
@@ -91,7 +103,7 @@ const GameCanvas2D = ({
         const mapWidth = 800 * mapScale;
         const mapHeight = 100 * mapScale;
         return {
-            x: loc.x - spriteSize.width / 2 - mapWidth * 0.25, // Offset left by 25% of map width
+            x: loc.x - spriteSize.width / 2 - mapWidth * 0.25 - 70, // Offset left by 25% of map width + 70px
             y: loc.y - mapHeight / 2 - spriteSize.height - 15
         };
     }, []);
@@ -169,10 +181,12 @@ const GameCanvas2D = ({
                 targetX = width / 2;
                 targetY = height / 2;
             } else {
-                // Zoom in on current location when idle
+                // Check if we're at the moon (last location)
+                const isAtMoon = gameState.currentLocationIndex === MOONBASE_ORDER.length - 1;
                 const currentLoc = locations[gameState.currentLocationIndex];
                 if (currentLoc) {
-                    targetZoom = ZOOM_IN;
+                    // Don't zoom in on moon - it's already huge
+                    targetZoom = isAtMoon ? ZOOM_OUT : ZOOM_IN;
                     targetX = currentLoc.x;
                     targetY = currentLoc.y;
                 }
@@ -183,6 +197,19 @@ const GameCanvas2D = ({
             camera.zoom += (targetZoom - camera.zoom) * lerpSpeed;
             camera.currentX += (targetX - camera.currentX) * lerpSpeed;
             camera.currentY += (targetY - camera.currentY) * lerpSpeed;
+            
+            // === MOON REVEAL ANIMATION ===
+            // Reveal the moon when flying TO it (previousLocationIndex is NYC and flying) or when landed
+            const moonReveal = moonRevealRef.current;
+            const isFlyingToMoon = isFlying && previousLocationIndex === NYC_INDEX;
+            if ((gameState.currentLocationIndex > NYC_INDEX || isFlyingToMoon) && !moonReveal.revealed) {
+                moonReveal.revealed = true;
+            }
+            
+            // Animate moon sliding in from the right
+            if (moonReveal.revealed) {
+                moonReveal.animatedX += (MOON_TARGET_X - moonReveal.animatedX) * 0.05; // Slower slide-in
+            }
 
             // Clear canvas
             ctx.clearRect(0, 0, width, height);
@@ -223,12 +250,42 @@ const GameCanvas2D = ({
                 // When flying, use previousLocationIndex for the progress path to avoid showing ahead
                 const progressIndex = isFlying ? previousLocationIndex : gameState.currentLocationIndex;
                 
+                // Check if we're at or flying to the moon
+                const isAtMoon = gameState.currentLocationIndex === MOONBASE_ORDER.length - 1 && !isFlying;
+                const isFlyingToMoon = isFlying && previousLocationIndex === NYC_INDEX;
+                
+                // Calculate fade out progress for other maps when flying to moon
+                const otherMapsFadeOut = isFlyingToMoon ? 1 - transitionProgressRef.current : (isAtMoon ? 0 : 1);
+                
                 // Draw progress path connecting all locations (horizontal line)
-                const pathPoints = locations.map(loc => ({ x: loc.x, y: loc.y }));
-                drawProgressPath(ctx, pathPoints, progressIndex, isFlying ? transitionProgressRef.current : 0);
+                // Hide/fade path when at moon or flying to it
+                if (otherMapsFadeOut > 0) {
+                    ctx.globalAlpha = otherMapsFadeOut;
+                    const pathPoints = locations
+                        .filter(loc => loc.id !== 'moon' || moonRevealRef.current.revealed)
+                        .map(loc => ({ x: loc.x, y: loc.y }));
+                    drawProgressPath(ctx, pathPoints, progressIndex, isFlying ? transitionProgressRef.current : 0);
+                    ctx.globalAlpha = 1;
+                }
                 
                 // Draw all locations
+                
                 locations.forEach((loc, index) => {
+                    // Skip moon until it's revealed (after completing NYC)
+                    if (loc.id === 'moon' && !moonRevealRef.current.revealed) {
+                        return;
+                    }
+                    
+                    // Fade out non-moon maps when flying to moon or at moon
+                    if (loc.id !== 'moon' && otherMapsFadeOut <= 0) {
+                        return; // Fully faded, skip
+                    }
+                    
+                    // Apply fade for non-moon maps
+                    if (loc.id !== 'moon' && otherMapsFadeOut < 1) {
+                        ctx.globalAlpha = otherMapsFadeOut;
+                    }
+                    
                     // When flying, the "active" location is where we're coming FROM
                     const isActive = isFlying ? index === previousLocationIndex : index === gameState.currentLocationIndex;
                     const isCompleted = index < (isFlying ? previousLocationIndex : gameState.currentLocationIndex);
@@ -261,6 +318,9 @@ const GameCanvas2D = ({
                     const labelY = drawY + mapHeight + 30;
                     const tooltipY = drawY - 20; // Position tooltip above the map
                     drawOfficeLabel(ctx, loc.moonbase, drawX + mapWidth / 2, labelY, isHovered, tooltipY);
+                    
+                    // Reset alpha
+                    ctx.globalAlpha = 1;
                 });
                 
                 ctx.globalAlpha = 1;
