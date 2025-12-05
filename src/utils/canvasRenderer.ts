@@ -132,7 +132,8 @@ export const drawCountryMap = (
     scale: number = 1,
     isActive: boolean = false,
     isCompleted: boolean = false,
-    isHovered: boolean = false
+    isHovered: boolean = false,
+    hoverIntensity: number = 0 // 0-1 for smooth hover transition
 ): void => {
     ctx.save();
     
@@ -140,26 +141,16 @@ export const drawCountryMap = (
     if (moonbase.mapImage) {
         const img = getCachedImage(moonbase.mapImage);
         if (img) {
-            // Calculate base dimensions
-            let imgWidth = img.width * scale;
-            let imgHeight = img.height * scale;
-            let drawX = x;
-            let drawY = y;
+            // Calculate dimensions
+            const imgWidth = img.width * scale;
+            const imgHeight = img.height * scale;
             
-            // Scale up by 1.05x when hovered (centered)
-            if (isHovered) {
-                const hoverScale = 1.05;
-                const newWidth = imgWidth * hoverScale;
-                const newHeight = imgHeight * hoverScale;
-                // Adjust position to keep centered
-                drawX = x - (newWidth - imgWidth) / 2;
-                drawY = y - (newHeight - imgHeight) / 2;
-                imgWidth = newWidth;
-                imgHeight = newHeight;
-            }
+            // Apply brightness filter when hovered (smooth transition via hoverIntensity)
+            const brightness = 1 + (hoverIntensity * 0.3); // Up to 30% brighter
+            ctx.filter = `brightness(${brightness})`;
             
             // Apply alpha based on state
-            if (isActive || isHovered) {
+            if (isActive || hoverIntensity > 0) {
                 ctx.globalAlpha = 1;
             } else if (isCompleted) {
                 ctx.globalAlpha = 0.7;
@@ -167,8 +158,9 @@ export const drawCountryMap = (
                 ctx.globalAlpha = 0.5;
             }
             
-            ctx.drawImage(img, drawX, drawY, imgWidth, imgHeight);
+            ctx.drawImage(img, x, y, imgWidth, imgHeight);
             
+            ctx.filter = 'none';
             ctx.restore();
             return;
         }

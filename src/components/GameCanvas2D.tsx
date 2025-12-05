@@ -39,6 +39,9 @@ const GameCanvas2D = ({
     const trailPositionsRef = useRef<{ x: number; y: number }[]>([]);
     const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
     
+    // Smooth hover intensity for each location (0-1)
+    const hoverIntensityRef = useRef<Record<string, number>>({});
+    
     // Track intro transition (from character creation to game)
     const introTransitionRef = useRef<{ active: boolean; startTime: number; fromPhase: string }>({ 
         active: false, 
@@ -178,19 +181,26 @@ const GameCanvas2D = ({
             let targetX = width / 2;
             let targetY = height / 2;
             
+            // Check if we're at the moon (last location)
+            const isAtMoon = gameState.currentLocationIndex === MOONBASE_ORDER.length - 1;
+            
             if (gameState.phase === 'character-creation') {
                 // No zoom during character creation
                 targetZoom = 1.0;
                 targetX = width / 2;
                 targetY = height / 2;
+            } else if (gameState.phase === 'victory' && isAtMoon) {
+                // Keep camera still during victory at moon - don't move it
+                // Just maintain current position (no lerp update will happen)
+                targetZoom = camera.zoom;
+                targetX = camera.currentX;
+                targetY = camera.currentY;
             } else if (isFlying) {
                 // Zoom out during flight to show both locations
                 targetZoom = ZOOM_OUT;
                 targetX = width / 2;
                 targetY = height / 2;
             } else {
-                // Check if we're at the moon (last location)
-                const isAtMoon = gameState.currentLocationIndex === MOONBASE_ORDER.length - 1;
                 const currentLoc = locations[gameState.currentLocationIndex];
                 if (currentLoc) {
                     // Don't zoom in on moon - it's already huge
@@ -315,6 +325,12 @@ const GameCanvas2D = ({
                     const isCompleted = index < (isFlying ? previousLocationIndex : gameState.currentLocationIndex);
                     const isHovered = hoveredLocation === loc.id;
                     
+                    // Smooth hover intensity transition
+                    const currentIntensity = hoverIntensityRef.current[loc.id] || 0;
+                    const targetIntensity = isHovered ? 1 : 0;
+                    const newIntensity = currentIntensity + (targetIntensity - currentIntensity) * 0.15;
+                    hoverIntensityRef.current[loc.id] = newIntensity;
+                    
                     // Use the moonbase's own scale multiplied by base scale
                     const mapScale = baseScale * loc.moonbase.mapScale;
                     
@@ -335,7 +351,8 @@ const GameCanvas2D = ({
                         mapScale,
                         isActive,
                         isCompleted,
-                        isHovered // Pass hover state for glow effect
+                        isHovered,
+                        newIntensity // Pass hover intensity for smooth brightness transition
                     );
                     
                     // Draw label below the location, tooltip above the map
