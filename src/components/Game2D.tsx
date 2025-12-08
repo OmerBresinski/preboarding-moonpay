@@ -128,10 +128,7 @@ const Game2D = () => {
                         <p style={styles.welcomeText}>
                             Congratulations on making it through the recruitment process, we're thrilled to have you join the team!
                             <br /><br />
-                            Before you dive into your new role, we've prepared a little adventure for you{' '}
-                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', verticalAlign: 'middle', marginLeft: 4 }}>
-                                <path fill="#7D00FF" d="M14.555 6.928a2.464 2.464 0 1 0 0-4.928 2.464 2.464 0 0 0 0 4.928M6.998 18.025a6.004 6.004 0 1 1 .01-12.008 6.004 6.004 0 0 1-.01 12.008"/>
-                            </svg>
+                            Before you dive into your new role, we've prepared a little adventure for you 🚀
                         </p>
                     </div>
                     
@@ -174,8 +171,14 @@ const Game2D = () => {
                     </div>
                     
                     <div style={styles.bottomButtonContainer}>
-                        <button type="button" style={styles.startButton} onClick={handleStartGame}>
-                            🚀 Begin Your Journey
+                        <button 
+                            type="button" 
+                            style={styles.startButton} 
+                            onClick={handleStartGame}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#33005A'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#250041'}
+                        >
+                            Let's go!
                         </button>
                     </div>
                 </>
@@ -347,8 +350,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     presetPanelContainer: {
         position: 'absolute',
         right: 27,
-        top: '50%',
-        transform: 'translateY(-50%)',
+        top: 217,
         zIndex: 10
     },
     presetPanel: {
@@ -420,7 +422,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     bottomButtonContainer: {
         position: 'absolute',
-        bottom: 40,
+        bottom: 88,
         left: 0,
         right: 0,
         display: 'flex',
@@ -428,17 +430,21 @@ const styles: { [key: string]: React.CSSProperties } = {
         zIndex: 10
     },
     startButton: {
-        padding: '16px 40px',
-        fontSize: 18,
+        width: 218,
+        height: 57,
+        fontSize: 20,
         fontWeight: 600,
+        lineHeight: '25px',
         color: '#FFF',
-        background: 'linear-gradient(135deg, #7D00FF 0%, #5a0099 100%)',
+        background: '#250041',
         border: 'none',
-        borderRadius: 30,
+        borderRadius: 37,
         cursor: 'pointer',
-        boxShadow: '0 4px 20px rgba(125, 0, 255, 0.5)',
-        fontFamily: FONT_FAMILY,
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+        fontFamily: "'Roboto', sans-serif",
+        transition: 'background 0.2s ease',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     victoryOverlay: {
         position: 'absolute',
