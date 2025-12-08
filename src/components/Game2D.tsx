@@ -123,16 +123,13 @@ const Game2D = () => {
             {/* Character Creation UI */}
             {gameState.phase === 'character-creation' && (
                 <>
-                    <div style={styles.creationOverlay}>
-                        <div style={styles.creationCard}>
-                            <h1 style={styles.welcomeTitle}>Welcome to MoonPay, {playerName}! 🎉</h1>
-                            <p style={styles.welcomeText}>
-                                Congratulations on making it through the recruitment process — we're thrilled to have you join the team!
-                                <br /><br />
-                                Before you dive into your new role, we've prepared a little adventure for you.
-                                Journey through MoonPay's global offices, from London all the way to the moon!
-                            </p>
-                        </div>
+                    <div style={styles.welcomeSection}>
+                        <h1 style={styles.welcomeTitle}>Welcome, <span style={styles.playerName}>{playerName}</span></h1>
+                        <p style={styles.welcomeText}>
+                            Congratulations on making it through the recruitment process, we're thrilled to have you join the team!
+                            <br /><br />
+                            Before you dive into your new role, we've prepared a little adventure for you 🚀
+                        </p>
                     </div>
                     
                     {/* Character Preset Selector */}
@@ -318,41 +315,31 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontFamily: FONT_FAMILY,
         backgroundColor: '#080510'
     },
-    creationOverlay: {
+    welcomeSection: {
         position: 'absolute',
-        top: 20,
-        left: 0,
-        right: 0,
-        display: 'flex',
-        justifyContent: 'center',
-        pointerEvents: 'none',
-        padding: '0 20px',
-        zIndex: 10
-    },
-    creationCard: {
-        background: 'rgba(13, 11, 26, 0.95)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(125, 0, 255, 0.3)',
-        borderRadius: 20,
-        padding: '30px 40px',
-        maxWidth: 600,
-        textAlign: 'center',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(125, 0, 255, 0.15)'
+        top: 195,
+        left: 90,
+        zIndex: 10,
+        pointerEvents: 'none'
     },
     welcomeTitle: {
         color: '#FFF',
-        fontSize: 28,
+        fontSize: 67,
         fontWeight: 700,
         margin: 0,
-        fontFamily: FONT_FAMILY
+        fontFamily: "'Roboto Slab', serif"
+    },
+    playerName: {
+        textTransform: 'capitalize'
     },
     welcomeText: {
-        color: 'rgba(255, 255, 255, 0.85)',
-        fontSize: 15,
+        color: '#FFFFFF',
+        fontSize: 16,
         fontWeight: 400,
-        marginTop: 16,
+        marginTop: 18,
         lineHeight: 1.7,
-        fontFamily: FONT_FAMILY
+        maxWidth: 496,
+        fontFamily: "'Roboto', sans-serif"
     },
     presetPanelContainer: {
         position: 'absolute',
