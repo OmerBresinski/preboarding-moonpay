@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import type { GameState } from '../utils/gameState';
 import { 
     createInitialGameState, 
@@ -9,10 +9,55 @@ import {
 import type { TriviaQuestion } from '../utils/triviaQuestions';
 import { getRandomQuestion } from '../utils/triviaQuestions';
 import { CHARACTER_PRESETS, type CharacterPreset } from '../utils/characterSprites';
-import { drawAlienSaucer, getSaucerPosition } from '../utils/canvasRenderer';
+import { drawAlienSaucer } from '../utils/canvasRenderer';
 import GameCanvas2D from './GameCanvas2D';
 import ProgressSidebar from './ProgressSidebar';
 import QuestionPanel from './QuestionPanel';
+
+// FYI facts for each moonbase location
+const MOONBASE_FYIS: Record<string, string[]> = {
+    'london': [
+        "MoonPay HQ. Ranked #21 on CNBC's 2025 Disruptor 50 list.",
+        "Where it all started. Now serving 30 million users across 180+ countries.",
+        "Global headquarters. From startup to $3.4B valuation in under 4 years.",
+        "Home base since 2019. Over $8 billion in crypto transactions processed."
+    ],
+    'amsterdam': [
+        "MoonPay received MiCA approval here — turning Europe purple in 2025.",
+        "EU headquarters. First crypto on-ramp with full MiCA compliance.",
+        "Where we secured European regulatory approval. Compliance never looked so good.",
+        "Our EU hub. Licensed across 50+ jurisdictions worldwide."
+    ],
+    'barcelona': [
+        "Engineering hub. The team here helped ship MoonPay Commerce in 2025.",
+        "Where we build products used by 6,000+ businesses globally.",
+        "Sun, sangria, and smart contracts. Our Mediterranean dev hub.",
+        "Home to the engineers powering 150 million merchant integrations."
+    ],
+    'dublin': [
+        "EMEA operations. Acquired Helio in 2025 to supercharge crypto payments.",
+        "Payments HQ. We partnered with Mastercard for global stablecoin payments here.",
+        "Where deals get done. Iron acquisition? Signed here. Mastercard partnership? Here too.",
+        "Our compliance nerve center. Operating in 180+ countries from this office."
+    ],
+    'new-york': [
+        "Just secured a New York Trust Charter — crypto custody and OTC trading unlocked.",
+        "Americas HQ. November 2025: MoonPay becomes a licensed NY trust company.",
+        "Wall Street meets Web3. Now offering institutional-grade crypto services.",
+        "The office that closed our $555M Series A. Now a regulated trust."
+    ],
+    'moon': [
+        "You made it! Welcome to the team powering crypto's mainstream adoption.",
+        "Final stop. MoonPay: 30M users, 180 countries, one mission.",
+        "To the moon! You're joining the #21 most disruptive company of 2025.",
+        "Mission complete. From fiat to moon — that's the MoonPay way."
+    ]
+};
+
+// Get all FYIs for a location
+const getFYIs = (location: string): string[] => {
+    return MOONBASE_FYIS[location] || MOONBASE_FYIS['london'];
+};
 
 const Game2D = () => {
     // Get player name from URL
@@ -26,9 +71,14 @@ const Game2D = () => {
     const [previousLocationIndex, setPreviousLocationIndex] = useState(0);
     const [selectedPreset, setSelectedPreset] = useState<CharacterPreset>(CHARACTER_PRESETS[0]);
     const [showVictoryScreen, setShowVictoryScreen] = useState<1 | 2 | null>(null);
-    
     // Animation progress ref
     const transitionProgressRef = useRef<number>(0);
+    
+    // Get all FYIs for current location
+    const locationFYIs = useMemo(() => {
+        const location = MOONBASE_ORDER[gameState.currentLocationIndex];
+        return getFYIs(location);
+    }, [gameState.currentLocationIndex]);
     
     // Load new question
     const loadNewQuestion = useCallback((answeredQuestions: number[]) => {
@@ -262,8 +312,13 @@ const Game2D = () => {
                 </div>
             )}
             
-            {/* Flying Saucer Overlay */}
-            <SaucerOverlay visible={gameState.phase === 'character-creation'} />
+            {/* Flying Saucer Overlay with FYI */}
+            <SaucerOverlay 
+                key={gameState.currentLocationIndex}
+                visible={gameState.phase === 'trivia' && !showVictoryScreen} 
+                isFlying={isFlying}
+                fyis={locationFYIs}
+            />
         </div>
     );
 };
@@ -301,11 +356,102 @@ const CharacterPreview = ({ preset }: { preset: CharacterPreset }) => {
     return <canvas ref={canvasRef} style={styles.previewCanvas} />;
 };
 
-// Flying saucer overlay component
-const SaucerOverlay = ({ visible }: { visible: boolean }) => {
+// Flying saucer overlay component with FYI chat bubble
+const SaucerOverlay = ({ visible, isFlying, fyis }: { visible: boolean; isFlying: boolean; fyis: string[] }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationRef = useRef<number>(0);
     const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+    const animationStartRef = useRef<number>(0);
+    const lastFlyingRef = useRef<boolean>(false);
+    const positionRef = useRef<number>(window.innerWidth + 150); // Start off-screen right
+    const hasArrivedRef = useRef<boolean>(false); // Track if saucer has arrived at this location
+    const [bubbleVisible, setBubbleVisible] = useState(false);
+    const [currentFyiIndex, setCurrentFyiIndex] = useState(0);
+    const [showEllipsis, setShowEllipsis] = useState(false);
+    const [ellipsisCount, setEllipsisCount] = useState(1);
+    const cycleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const ellipsisTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    
+    // Reset position when component mounts (new location via key change)
+    useEffect(() => {
+        positionRef.current = window.innerWidth + 150;
+        hasArrivedRef.current = false;
+    }, []);
+    
+    // Handle FYI cycling: 3s FYI -> 2s ellipsis animation -> next FYI
+    useEffect(() => {
+        if (!visible || isFlying || !bubbleVisible) {
+            if (cycleTimerRef.current) clearTimeout(cycleTimerRef.current);
+            if (ellipsisTimerRef.current) clearInterval(ellipsisTimerRef.current);
+            const resetTimer = setTimeout(() => setShowEllipsis(false), 0);
+            return () => clearTimeout(resetTimer);
+        }
+        
+        const fyiCount = fyis.length;
+        let ellipsisPhase = false;
+        let ellipsisCounter = 0;
+        
+        // Main cycle: every 100ms check what phase we're in
+        const cycleLength = 6500; // 4.5s FYI + 2s ellipsis
+        const startTime = Date.now();
+        
+        const tick = () => {
+            const elapsed = (Date.now() - startTime) % cycleLength;
+            
+            if (elapsed < 4500) {
+                // FYI phase
+                if (ellipsisPhase) {
+                    ellipsisPhase = false;
+                    setShowEllipsis(false);
+                    setCurrentFyiIndex(prev => (prev + 1) % fyiCount);
+                }
+            } else {
+                // Ellipsis phase
+                if (!ellipsisPhase) {
+                    ellipsisPhase = true;
+                    setShowEllipsis(true);
+                    ellipsisCounter = 0;
+                }
+                // Update ellipsis dots
+                const ellipsisElapsed = elapsed - 4500;
+                const newCount = Math.min(3, Math.floor(ellipsisElapsed / 400) % 3 + 1);
+                if (newCount !== ellipsisCounter) {
+                    ellipsisCounter = newCount;
+                    setEllipsisCount(newCount);
+                }
+            }
+        };
+        
+        ellipsisTimerRef.current = setInterval(tick, 100);
+        
+        return () => {
+            if (ellipsisTimerRef.current) clearInterval(ellipsisTimerRef.current);
+        };
+    }, [visible, isFlying, bubbleVisible, fyis.length]);
+    
+    // Handle bubble visibility with timer
+    useEffect(() => {
+        // Reset position when not visible OR when we stop flying (arrived at new location)
+        if (!visible || !isFlying) {
+            // If we just stopped flying or became visible, reset position to come from right
+            if (visible && !isFlying) {
+                positionRef.current = window.innerWidth + 150;
+                hasArrivedRef.current = false;
+            }
+        }
+        
+        if (!visible || isFlying) {
+            const hideTimer = setTimeout(() => setBubbleVisible(false), 0);
+            return () => clearTimeout(hideTimer);
+        }
+        
+        // Show bubble after saucer arrives (approx 1.5s for slower flight)
+        const showTimer = setTimeout(() => {
+            setBubbleVisible(true);
+        }, 1500);
+        
+        return () => clearTimeout(showTimer);
+    }, [visible, isFlying]);
     
     useEffect(() => {
         if (!visible) return;
@@ -328,20 +474,67 @@ const SaucerOverlay = ({ visible }: { visible: boolean }) => {
         };
         window.addEventListener('mousemove', handleMouseMove);
         
+        // Detect transition to flying
+        if (isFlying && !lastFlyingRef.current) {
+            animationStartRef.current = performance.now();
+        }
+        // Detect transition from flying to not flying (arrived at new location)
+        if (!isFlying && lastFlyingRef.current) {
+            positionRef.current = window.innerWidth + 150;
+            hasArrivedRef.current = false;
+        }
+        lastFlyingRef.current = isFlying;
+        
         const render = (time: number) => {
             const { width, height } = canvas;
             ctx.clearRect(0, 0, width, height);
             
-            // Get saucer position (flies in figure-8 pattern)
-            const saucerPos = getSaucerPosition(
+            const targetX = width - 200; // Stop 200px from right
+            const saucerY = height * 0.35 - 70; // 70px higher
+            
+            // Calculate opacity (fade out when flying/leaving)
+            let opacity = 1;
+            if (isFlying) {
+                // Fade out over 600ms
+                const fadeProgress = Math.min(1, (time - animationStartRef.current) / 600);
+                opacity = 1 - fadeProgress;
+            }
+            
+            // Position logic (no exit movement, just approach and drift)
+            if (!isFlying) {
+                if (positionRef.current > targetX) {
+                    // Fast approach to target
+                    const diff = targetX - positionRef.current;
+                    positionRef.current += diff * 0.03;
+                } else {
+                    // Slow drift to the left
+                    positionRef.current -= 0.15;
+                }
+            }
+            
+            // Wobbly hover animation
+            const hoverOffset = Math.sin(time / 400) * 6 + Math.sin(time / 250) * 3;
+            const wobbleX = Math.sin(time / 300) * 8;
+            const tilt = Math.sin(time / 500) * 0.05;
+            
+            // Tilt based on movement
+            const movementTilt = positionRef.current > targetX + 50 ? -0.08 : tilt;
+            
+            // Apply opacity
+            ctx.globalAlpha = opacity;
+            
+            drawAlienSaucer(
+                ctx, 
+                positionRef.current + wobbleX, 
+                saucerY + hoverOffset, 
                 time / 1000, 
-                width * 0.35, 
-                height * 0.3, 
-                width * 0.2, 
-                height * 0.12
+                mouseRef.current.x, 
+                mouseRef.current.y, 
+                movementTilt * 1000
             );
             
-            drawAlienSaucer(ctx, saucerPos.x, saucerPos.y, time / 1000, mouseRef.current.x, mouseRef.current.y, saucerPos.velocityX);
+            // Reset alpha
+            ctx.globalAlpha = 1;
             
             animationRef.current = requestAnimationFrame(render);
         };
@@ -355,23 +548,48 @@ const SaucerOverlay = ({ visible }: { visible: boolean }) => {
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, [visible]);
+    }, [visible, isFlying]);
     
     if (!visible) return null;
     
     return (
-        <canvas
-            ref={canvasRef}
-            style={{
+        <>
+            <canvas
+                ref={canvasRef}
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: 'none',
+                    zIndex: 1000
+                }}
+            />
+            {/* Chat bubble - positioned to the left of the alien */}
+            <div style={{
                 position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
+                right: 270,
+                top: 'calc(35% - 80px)',
+                maxWidth: 300,
+                padding: '12px 16px',
+                background: 'rgba(125, 0, 255, 0.95)',
+                borderRadius: 12,
+                borderBottomRightRadius: 4,
+                color: 'white',
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                fontSize: 13,
+                lineHeight: 1.5,
                 pointerEvents: 'none',
-                zIndex: 1000
-            }}
-        />
+                zIndex: 1001,
+                opacity: bubbleVisible ? 1 : 0,
+                transform: `translateX(${bubbleVisible ? 0 : -20}px)`,
+                transition: 'opacity 0.3s ease, transform 0.3s ease',
+                boxShadow: '0 4px 20px rgba(125, 0, 255, 0.4)'
+            }}>
+                {showEllipsis ? '.'.repeat(ellipsisCount) : fyis[currentFyiIndex]}
+            </div>
+        </>
     );
 };
 
@@ -459,7 +677,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         borderRadius: 12,
         cursor: 'pointer',
         transition: 'all 0.2s ease',
-        minHeight: 95
+        minHeight: 95,
+        minWidth: 70
     },
     previewCanvas: {
         width: 40,

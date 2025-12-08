@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import type { GameState } from '../utils/gameState';
 import { MOONBASE_ORDER } from '../utils/gameState';
 import { MOONBASE_DATA, type MoonBaseInfo } from '../utils/moonbases';
@@ -37,10 +37,8 @@ const GameCanvas2D = ({
     const startTimeRef = useRef<number>(0);
     const isAnimatingRef = useRef(false);
     const trailPositionsRef = useRef<{ x: number; y: number }[]>([]);
-    const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
-    
-    // Smooth hover intensity for each location (0-1)
-    const hoverIntensityRef = useRef<Record<string, number>>({});
+    // Smooth intensity for each location (0-1) - used for active state highlighting
+    const intensityRef = useRef<Record<string, number>>({});
     
     // Track intro transition (from character creation to game)
     const introTransitionRef = useRef<{ active: boolean; startTime: number; fromPhase: string }>({ 
@@ -323,13 +321,11 @@ const GameCanvas2D = ({
                     // When flying, the "active" location is where we're coming FROM
                     const isActive = isFlying ? index === previousLocationIndex : index === gameState.currentLocationIndex;
                     const isCompleted = index < (isFlying ? previousLocationIndex : gameState.currentLocationIndex);
-                    const isHovered = hoveredLocation === loc.id;
-                    
-                    // Smooth hover/active intensity transition (active maps are highlighted like hovered)
-                    const currentIntensity = hoverIntensityRef.current[loc.id] || 0;
-                    const targetIntensity = (isHovered || isActive) ? 1 : 0;
+                    // Smooth active intensity transition
+                    const currentIntensity = intensityRef.current[loc.id] || 0;
+                    const targetIntensity = isActive ? 1 : 0;
                     const newIntensity = currentIntensity + (targetIntensity - currentIntensity) * 0.15;
-                    hoverIntensityRef.current[loc.id] = newIntensity;
+                    intensityRef.current[loc.id] = newIntensity;
                     
                     // Use the moonbase's own scale multiplied by base scale
                     const mapScale = baseScale * loc.moonbase.mapScale;
@@ -351,14 +347,14 @@ const GameCanvas2D = ({
                         mapScale,
                         isActive,
                         isCompleted,
-                        isHovered,
-                        newIntensity // Pass hover intensity for smooth brightness transition
+                        false, // No hover
+                        newIntensity // Pass intensity for smooth brightness transition
                     );
                     
                     // Draw label below the location, tooltip above the map
                     const labelY = drawY + mapHeight + 30;
                     const tooltipY = drawY - 20; // Position tooltip above the map
-                    drawOfficeLabel(ctx, loc.moonbase, drawX + mapWidth / 2, labelY, isHovered, tooltipY);
+                    drawOfficeLabel(ctx, loc.moonbase, drawX + mapWidth / 2, labelY, false, tooltipY);
                     
                     // Reset alpha
                     ctx.globalAlpha = 1;
@@ -531,7 +527,6 @@ const GameCanvas2D = ({
         characterPreset,
         isFlying,
         previousLocationIndex,
-        hoveredLocation,
         getLocationCanvasPositions,
         getCharacterPositionAtLocation,
         onTransitionComplete,
@@ -554,33 +549,7 @@ const GameCanvas2D = ({
         
         // Store mouse position for character interaction
         mousePositionRef.current = { worldX, worldY, screenX, screenY };
-        
-        const locations = getLocationCanvasPositions(canvas.width, canvas.height);
-        
-        // Check if hovering over any location (check if mouse is within map bounds)
-        const baseScale = Math.min(canvas.width / 1920, canvas.height / 1080) * 0.8;
-        
-        let foundHover = false;
-        for (const loc of locations) {
-            const mapScale = baseScale * loc.moonbase.mapScale;
-            const mapWidth = 800 * mapScale;
-            const mapHeight = 800 * mapScale;
-            const drawX = loc.x - mapWidth / 2;
-            const drawY = loc.y - mapHeight / 2;
-            
-            // Check if mouse is within the map bounds (in world coordinates)
-            if (worldX >= drawX && worldX <= drawX + mapWidth && 
-                worldY >= drawY && worldY <= drawY + mapHeight) {
-                setHoveredLocation(loc.id);
-                foundHover = true;
-                break;
-            }
-        }
-        
-        if (!foundHover) {
-            setHoveredLocation(null);
-        }
-    }, [getLocationCanvasPositions]);
+    }, []);
 
     return (
         <canvas
