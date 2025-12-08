@@ -128,14 +128,17 @@ const Game2D = () => {
                         <p style={styles.welcomeText}>
                             Congratulations on making it through the recruitment process, we're thrilled to have you join the team!
                             <br /><br />
-                            Before you dive into your new role, we've prepared a little adventure for you 🚀
+                            Before you dive into your new role, we've prepared a little adventure for you{' '}
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', verticalAlign: 'middle', marginLeft: 4 }}>
+                                <path fill="#7D00FF" d="M14.555 6.928a2.464 2.464 0 1 0 0-4.928 2.464 2.464 0 0 0 0 4.928M6.998 18.025a6.004 6.004 0 1 1 .01-12.008 6.004 6.004 0 0 1-.01 12.008"/>
+                            </svg>
                         </p>
                     </div>
                     
                     {/* Character Preset Selector */}
                     <div style={styles.presetPanelContainer}>
                         <div style={styles.presetPanel}>
-                            <h3 style={styles.presetTitle}>🚀 Choose Your Astronaut</h3>
+                            <h3 style={styles.presetTitle}>Ready for lift off?</h3>
                             <div style={styles.presetGrid}>
                                 {CHARACTER_PRESETS.map((preset) => (
                                     <button
@@ -343,35 +346,29 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     presetPanelContainer: {
         position: 'absolute',
-        right: 20,
+        right: 27,
         top: '50%',
         transform: 'translateY(-50%)',
-        zIndex: 10,
-        maxHeight: '85vh',
-        overflowY: 'auto'
+        zIndex: 10
     },
     presetPanel: {
-        background: 'rgba(13, 11, 26, 0.95)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(125, 0, 255, 0.3)',
-        borderRadius: 20,
-        padding: '20px 24px',
-        minWidth: 380,
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(125, 0, 255, 0.15)'
+        background: 'rgba(13, 10, 29, 0.5)',
+        borderRadius: 11,
+        padding: 20,
+        width: 340
     },
     presetTitle: {
         color: '#FFF',
-        fontSize: 18,
-        fontWeight: 700,
-        margin: '0 0 20px 0',
+        fontSize: 17,
+        fontWeight: 500,
+        margin: '0 0 16px 0',
         textAlign: 'center',
-        fontFamily: FONT_FAMILY
+        fontFamily: "'Roboto Slab', serif"
     },
     presetGrid: {
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 10,
-        maxWidth: 360
+        gap: 10
     },
     presetButton: {
         display: 'flex',
