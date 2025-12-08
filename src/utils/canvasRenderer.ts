@@ -252,7 +252,7 @@ export const drawMoonPayPin = (
     ctx.restore();
 };
 
-// Draw office name label with hover tooltip
+// Draw location label with hover tooltip
 export const drawOfficeLabel = (
     ctx: CanvasRenderingContext2D,
     moonbase: MoonBaseInfo,
@@ -263,16 +263,11 @@ export const drawOfficeLabel = (
 ): void => {
     ctx.save();
     
-    // Office name
+    // Country/region name only
     ctx.font = 'bold 14px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = COLORS.mpWhite;
-    ctx.fillText(moonbase.officeName, x, y);
-    
-    // City name below
-    ctx.font = '12px "Space Grotesk", sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.fillText(moonbase.name, x, y + 18);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fillText(moonbase.country, x, y);
     
     // Fun fact tooltip on hover (positioned above the map if tooltipY is provided)
     if (isHovered) {

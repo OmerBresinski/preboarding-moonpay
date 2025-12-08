@@ -163,7 +163,13 @@ const Game2D = () => {
                                     </button>
                                 ))}
                             </div>
-                            <p style={styles.presetDescription}>{selectedPreset.description}</p>
+                        </div>
+                    </div>
+                    
+                    {/* Chat Bubble next to character */}
+                    <div style={styles.chatBubbleContainer}>
+                        <div style={styles.chatBubble}>
+                            <span style={styles.chatBubbleText}>{selectedPreset.description}</span>
                         </div>
                     </div>
                     
@@ -191,7 +197,8 @@ const Game2D = () => {
                 <div style={styles.victoryOverlay}>
                     <div style={styles.unlockCard}>
                         <div style={styles.moonpayLogo}>
-                            <svg width="80" height="80" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg width="80" height="80" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="moonpay-logo-title">
+                                <title id="moonpay-logo-title">MoonPay Logo</title>
                                 <path fill="#7D00FF" d="M14.555 6.928a2.464 2.464 0 1 0 0-4.928 2.464 2.464 0 0 0 0 4.928M6.998 18.025a6.004 6.004 0 1 1 .01-12.008 6.004 6.004 0 0 1-.01 12.008"/>
                             </svg>
                         </div>
@@ -403,15 +410,29 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontFamily: FONT_FAMILY,
         textAlign: 'center'
     },
-    presetDescription: {
-        color: 'rgba(255, 255, 255, 0.85)',
-        fontSize: 13,
-        textAlign: 'center',
-        marginTop: 16,
-        marginBottom: 0,
-        fontFamily: FONT_FAMILY,
-        fontStyle: 'italic',
-        lineHeight: 1.4
+    chatBubbleContainer: {
+        position: 'absolute',
+        left: '50%',
+        top: '30%',
+        transform: 'translateX(20px)',
+        zIndex: 10
+    },
+    chatBubble: {
+        background: 'linear-gradient(135deg, rgba(125, 0, 255, 0.35) 0%, rgba(90, 0, 153, 0.3) 100%)',
+        border: '2px solid rgba(125, 0, 255, 0.6)',
+        borderRadius: 16,
+        padding: '16px 20px',
+        maxWidth: 280,
+        boxShadow: '0 4px 20px rgba(125, 0, 255, 0.3)',
+        backdropFilter: 'blur(10px)'
+    },
+    chatBubbleText: {
+        color: '#E0FFE0',
+        fontSize: 16,
+        fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace",
+        lineHeight: 1.6,
+        display: 'block',
+        textAlign: 'left'
     },
     bottomButtonContainer: {
         position: 'absolute',
