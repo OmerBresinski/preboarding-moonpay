@@ -633,7 +633,10 @@ export const drawAlienSaucer = (
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
-    time: number
+    time: number,
+    mouseX?: number,
+    mouseY?: number,
+    velocityX: number = 0
 ): void => {
     ctx.save();
     
@@ -641,7 +644,9 @@ export const drawAlienSaucer = (
     
     // Slight wobble animation
     const wobble = Math.sin(time * 3) * 1.5;
-    const tilt = Math.sin(time * 2) * 0.04;
+    // Tilt based on movement direction (negative velocityX = moving left = tilt left)
+    const movementTilt = Math.max(-0.15, Math.min(0.15, velocityX * 0.003));
+    const tilt = Math.sin(time * 2) * 0.02 + movementTilt;
     
     ctx.translate(x + 30, y + 30);
     ctx.rotate(tilt);
@@ -655,12 +660,13 @@ export const drawAlienSaucer = (
     const yellow = '#FFD700';
     const glassColor = 'rgba(135, 206, 235, 0.6)';
     const glassHighlight = 'rgba(255, 255, 255, 0.5)';
-    const alienPurple = '#9B59B6';
-    const alienDarkPurple = '#7D4A94';
+    const alienPurple = '#7D00FF';
+    const alienDarkPurple = '#5a00bb';
     const turquoiseEyes = '#008B8B';
     
-    // Helper to draw a pixel
+    // Helper to draw a pixel (100% opacity)
     const drawPixel = (px: number, py: number, color: string) => {
+        ctx.globalAlpha = 1.0;
         ctx.fillStyle = color;
         ctx.fillRect(px * pixelSize, py * pixelSize + wobble, pixelSize, pixelSize);
     };
@@ -766,18 +772,47 @@ export const drawAlienSaucer = (
     drawPixel(17, 8, alienDarkPurple);
     drawPixel(16, 9, alienDarkPurple);
     
-    // Alien eyes (dark turquoise)
+    // Alien eyes (dark turquoise) - follow cursor
+    // Calculate eye offset based on mouse position
+    let eyeOffsetX = 0;
+    let eyeOffsetY = 0;
+    
+    if (mouseX !== undefined && mouseY !== undefined) {
+        // Calculate alien center in screen coordinates (saucer position + alien offset)
+        const alienCenterX = x + 30; // Center of the saucer
+        const alienCenterY = y + 20; // Approximate alien head center
+        const dx = mouseX - alienCenterX;
+        const dy = mouseY - alienCenterY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 1) {
+            const maxOffset = pixelSize * 2;
+            // Normalize direction and apply offset equally in both directions
+            const normalizedX = dx / distance;
+            const normalizedY = dy / distance;
+            eyeOffsetX = normalizedX * maxOffset;
+            eyeOffsetY = normalizedY * maxOffset * 0.7;
+        }
+    }
+    
+    // Helper to draw eye pixel with offset (solid, no transparency)
+    const drawEyePixel = (px: number, py: number, color: string) => {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 1.0;
+        ctx.fillRect(px * pixelSize + eyeOffsetX, py * pixelSize + wobble + eyeOffsetY, pixelSize, pixelSize);
+    };
+    
     // Left eye
-    drawPixel(13, 7, turquoiseEyes);
-    drawPixel(13, 8, turquoiseEyes);
+    drawEyePixel(13, 7, turquoiseEyes);
+    drawEyePixel(13, 8, turquoiseEyes);
     
     // Right eye
-    drawPixel(15, 7, turquoiseEyes);
-    drawPixel(15, 8, turquoiseEyes);
+    drawEyePixel(15, 7, turquoiseEyes);
+    drawEyePixel(15, 8, turquoiseEyes);
     
     // Eye highlights
-    drawPixel(13, 7, '#00BFBF');
-    drawPixel(15, 7, '#00BFBF');
+    drawEyePixel(13, 7, '#00BFBF');
+    drawEyePixel(15, 7, '#00BFBF');
     
     // === TOP ANTENNA/LIGHT ===
     drawPixel(14, 3, purple);
@@ -804,11 +839,13 @@ export const getSaucerPosition = (
     centerY: number,
     radiusX: number = 200,
     radiusY: number = 100
-): { x: number; y: number } => {
+): { x: number; y: number; velocityX: number } => {
     const t = time * 0.3; // Speed of movement
     // Figure-8 / lemniscate pattern
     const x = centerX + radiusX * Math.sin(t);
     const y = centerY + radiusY * Math.sin(t * 2) * 0.5;
-    return { x, y };
+    // Calculate velocity (derivative of x position)
+    const velocityX = radiusX * Math.cos(t) * 0.3;
+    return { x, y, velocityX };
 };
 

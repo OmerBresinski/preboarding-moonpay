@@ -305,6 +305,7 @@ const CharacterPreview = ({ preset }: { preset: CharacterPreset }) => {
 const SaucerOverlay = ({ visible }: { visible: boolean }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationRef = useRef<number>(0);
+    const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     
     useEffect(() => {
         if (!visible) return;
@@ -322,6 +323,11 @@ const SaucerOverlay = ({ visible }: { visible: boolean }) => {
         handleResize();
         window.addEventListener('resize', handleResize);
         
+        const handleMouseMove = (e: MouseEvent) => {
+            mouseRef.current = { x: e.clientX, y: e.clientY };
+        };
+        window.addEventListener('mousemove', handleMouseMove);
+        
         const render = (time: number) => {
             const { width, height } = canvas;
             ctx.clearRect(0, 0, width, height);
@@ -335,7 +341,7 @@ const SaucerOverlay = ({ visible }: { visible: boolean }) => {
                 height * 0.12
             );
             
-            drawAlienSaucer(ctx, saucerPos.x, saucerPos.y, time / 1000);
+            drawAlienSaucer(ctx, saucerPos.x, saucerPos.y, time / 1000, mouseRef.current.x, mouseRef.current.y, saucerPos.velocityX);
             
             animationRef.current = requestAnimationFrame(render);
         };
@@ -344,6 +350,7 @@ const SaucerOverlay = ({ visible }: { visible: boolean }) => {
         
         return () => {
             window.removeEventListener('resize', handleResize);
+            window.removeEventListener('mousemove', handleMouseMove);
             if (animationRef.current) {
                 cancelAnimationFrame(animationRef.current);
             }
