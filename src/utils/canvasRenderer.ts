@@ -628,3 +628,187 @@ export const clearShimmerParticles = (): void => {
     shimmerParticles = [];
 };
 
+// Draw pixel art alien saucer
+export const drawAlienSaucer = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    time: number
+): void => {
+    ctx.save();
+    
+    const pixelSize = 2; // Smaller pixel size
+    
+    // Slight wobble animation
+    const wobble = Math.sin(time * 3) * 1.5;
+    const tilt = Math.sin(time * 2) * 0.04;
+    
+    ctx.translate(x + 30, y + 30);
+    ctx.rotate(tilt);
+    ctx.translate(-30, -30);
+    
+    // Colors
+    const purple = '#7D00FF';
+    const purpleDark = '#5a00bb';
+    const lightRed = '#FF6B6B';
+    const lightRedDark = '#E85555';
+    const yellow = '#FFD700';
+    const glassColor = 'rgba(135, 206, 235, 0.6)';
+    const glassHighlight = 'rgba(255, 255, 255, 0.5)';
+    const alienPurple = '#9B59B6';
+    const alienDarkPurple = '#7D4A94';
+    const turquoiseEyes = '#008B8B';
+    
+    // Helper to draw a pixel
+    const drawPixel = (px: number, py: number, color: string) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(px * pixelSize, py * pixelSize + wobble, pixelSize, pixelSize);
+    };
+    
+    // === LEGS (purple, chunkier) ===
+    // Left leg - chunky
+    drawPixel(5, 16, purple);
+    drawPixel(4, 16, purple);
+    drawPixel(4, 17, purple);
+    drawPixel(3, 17, purple);
+    drawPixel(3, 18, purpleDark);
+    drawPixel(2, 18, purpleDark);
+    drawPixel(2, 19, purpleDark);
+    
+    // Middle leg - chunky
+    drawPixel(14, 16, purple);
+    drawPixel(15, 16, purple);
+    drawPixel(14, 17, purple);
+    drawPixel(15, 17, purple);
+    drawPixel(14, 18, purpleDark);
+    drawPixel(15, 18, purpleDark);
+    drawPixel(14, 19, purpleDark);
+    drawPixel(15, 19, purpleDark);
+    
+    // Right leg - chunky
+    drawPixel(24, 16, purple);
+    drawPixel(25, 16, purple);
+    drawPixel(25, 17, purple);
+    drawPixel(26, 17, purple);
+    drawPixel(26, 18, purpleDark);
+    drawPixel(27, 18, purpleDark);
+    drawPixel(27, 19, purpleDark);
+    
+    // === BODY (light red ellipse with yellow dots) ===
+    const bodyRows = [
+        { y: 12, startX: 6, endX: 23 },
+        { y: 13, startX: 4, endX: 25 },
+        { y: 14, startX: 3, endX: 26 },
+        { y: 15, startX: 4, endX: 25 },
+        { y: 16, startX: 6, endX: 23 },
+    ];
+    
+    bodyRows.forEach(row => {
+        for (let px = row.startX; px <= row.endX; px++) {
+            drawPixel(px, row.y, row.y === 14 ? lightRed : lightRedDark);
+        }
+    });
+    
+    // Yellow dots across the middle of the body (row 14)
+    const dotPositions = [5, 9, 13, 17, 21, 25];
+    dotPositions.forEach(px => {
+        drawPixel(px, 14, yellow);
+    });
+    
+    // Body rim highlight (top edge)
+    for (let px = 7; px <= 22; px++) {
+        drawPixel(px, 11, '#FF8888');
+    }
+    
+    // === GLASS DOME ===
+    const domeRows = [
+        { y: 5, startX: 11, endX: 18 },
+        { y: 6, startX: 9, endX: 20 },
+        { y: 7, startX: 8, endX: 21 },
+        { y: 8, startX: 8, endX: 21 },
+        { y: 9, startX: 8, endX: 21 },
+        { y: 10, startX: 9, endX: 20 },
+        { y: 11, startX: 10, endX: 19 },
+    ];
+    
+    domeRows.forEach(row => {
+        for (let px = row.startX; px <= row.endX; px++) {
+            drawPixel(px, row.y, glassColor);
+        }
+    });
+    
+    // Glass highlight (reflection)
+    drawPixel(9, 6, glassHighlight);
+    drawPixel(10, 6, glassHighlight);
+    drawPixel(9, 7, glassHighlight);
+    drawPixel(10, 7, glassHighlight);
+    
+    // === ALIEN inside the dome (pickle/straight body) ===
+    // Alien body - more vertical/pickle shaped
+    const alienRows = [
+        { y: 6, startX: 13, endX: 16 },
+        { y: 7, startX: 12, endX: 17 },
+        { y: 8, startX: 12, endX: 17 },
+        { y: 9, startX: 12, endX: 17 },
+        { y: 10, startX: 13, endX: 16 },
+    ];
+    
+    alienRows.forEach(row => {
+        for (let px = row.startX; px <= row.endX; px++) {
+            drawPixel(px, row.y, alienPurple);
+        }
+    });
+    
+    // Alien darker shading (right side)
+    drawPixel(16, 7, alienDarkPurple);
+    drawPixel(17, 7, alienDarkPurple);
+    drawPixel(16, 8, alienDarkPurple);
+    drawPixel(17, 8, alienDarkPurple);
+    drawPixel(16, 9, alienDarkPurple);
+    
+    // Alien eyes (dark turquoise)
+    // Left eye
+    drawPixel(13, 7, turquoiseEyes);
+    drawPixel(13, 8, turquoiseEyes);
+    
+    // Right eye
+    drawPixel(15, 7, turquoiseEyes);
+    drawPixel(15, 8, turquoiseEyes);
+    
+    // Eye highlights
+    drawPixel(13, 7, '#00BFBF');
+    drawPixel(15, 7, '#00BFBF');
+    
+    // === TOP ANTENNA/LIGHT ===
+    drawPixel(14, 3, purple);
+    drawPixel(15, 3, purple);
+    drawPixel(14, 4, purple);
+    drawPixel(15, 4, purple);
+    // Blinking light
+    const blink = Math.sin(time * 8) > 0;
+    if (blink) {
+        drawPixel(14, 2, '#FF0000');
+        drawPixel(15, 2, '#FF0000');
+    } else {
+        drawPixel(14, 2, '#AA0000');
+        drawPixel(15, 2, '#AA0000');
+    }
+    
+    ctx.restore();
+};
+
+// Calculate saucer flight path (figure-8 / lemniscate pattern)
+export const getSaucerPosition = (
+    time: number,
+    centerX: number,
+    centerY: number,
+    radiusX: number = 200,
+    radiusY: number = 100
+): { x: number; y: number } => {
+    const t = time * 0.3; // Speed of movement
+    // Figure-8 / lemniscate pattern
+    const x = centerX + radiusX * Math.sin(t);
+    const y = centerY + radiusY * Math.sin(t * 2) * 0.5;
+    return { x, y };
+};
+

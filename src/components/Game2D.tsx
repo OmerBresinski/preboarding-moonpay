@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { GameState } from '../utils/gameState';
 import { 
     createInitialGameState, 
@@ -9,6 +9,7 @@ import {
 import type { TriviaQuestion } from '../utils/triviaQuestions';
 import { getRandomQuestion } from '../utils/triviaQuestions';
 import { CHARACTER_PRESETS, type CharacterPreset } from '../utils/characterSprites';
+import { drawAlienSaucer, getSaucerPosition } from '../utils/canvasRenderer';
 import GameCanvas2D from './GameCanvas2D';
 import ProgressSidebar from './ProgressSidebar';
 import QuestionPanel from './QuestionPanel';
@@ -260,6 +261,9 @@ const Game2D = () => {
                     </div>
                 </div>
             )}
+            
+            {/* Flying Saucer Overlay */}
+            <SaucerOverlay visible={gameState.phase === 'character-creation'} />
         </div>
     );
 };
@@ -295,6 +299,73 @@ const CharacterPreview = ({ preset }: { preset: CharacterPreset }) => {
     }, [preset]);
     
     return <canvas ref={canvasRef} style={styles.previewCanvas} />;
+};
+
+// Flying saucer overlay component
+const SaucerOverlay = ({ visible }: { visible: boolean }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const animationRef = useRef<number>(0);
+    
+    useEffect(() => {
+        if (!visible) return;
+        
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        const handleResize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        
+        const render = (time: number) => {
+            const { width, height } = canvas;
+            ctx.clearRect(0, 0, width, height);
+            
+            // Get saucer position (flies in figure-8 pattern)
+            const saucerPos = getSaucerPosition(
+                time / 1000, 
+                width * 0.35, 
+                height * 0.3, 
+                width * 0.2, 
+                height * 0.12
+            );
+            
+            drawAlienSaucer(ctx, saucerPos.x, saucerPos.y, time / 1000);
+            
+            animationRef.current = requestAnimationFrame(render);
+        };
+        
+        animationRef.current = requestAnimationFrame(render);
+        
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
+            }
+        };
+    }, [visible]);
+    
+    if (!visible) return null;
+    
+    return (
+        <canvas
+            ref={canvasRef}
+            style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 1000
+            }}
+        />
+    );
 };
 
 // Perks data
