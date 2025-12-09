@@ -92,7 +92,7 @@ const ProgressSidebar: React.FC<ProgressSidebarProps> = ({ currentIndex }) => {
 
 const styles: { [key: string]: React.CSSProperties } = {
     container: {
-        padding: '0 20px 20px 20px',
+        padding: '0 24px 20px 24px',
         fontFamily: "'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif"
     },
     locationList: {

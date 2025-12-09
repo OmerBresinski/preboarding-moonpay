@@ -175,7 +175,7 @@ const Game2D = () => {
                         left: 0,
                         zIndex: 100,
                         width: sidebarOpen ? 253 : 61,
-                        height: sidebarOpen ? 330 : 53,
+                        height: sidebarOpen ? 330 : 58,
                         backgroundColor: '#1D1436',
                         borderTop: '1px solid #480990',
                         borderRight: '1px solid #480990',
@@ -197,10 +197,11 @@ const Game2D = () => {
                     {/* Header with icon - always visible */}
                     <div
                         style={{
-                            padding: '16px 20px 12px 20px',
+                            padding: sidebarOpen ? '20px 24px 12px 24px' : '16px 20px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 12
+                            gap: 12,
+                            transition: 'padding 0.3s ease'
                         }}
                     >
                         <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="mapIconTitle">
