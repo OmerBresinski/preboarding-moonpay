@@ -71,6 +71,7 @@ const Game2D = () => {
     const [previousLocationIndex, setPreviousLocationIndex] = useState(0);
     const [selectedPreset, setSelectedPreset] = useState<CharacterPreset>(CHARACTER_PRESETS[0]);
     const [showVictoryScreen, setShowVictoryScreen] = useState<1 | 2 | null>(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     // Animation progress ref
     const transitionProgressRef = useRef<number>(0);
     
@@ -163,12 +164,107 @@ const Game2D = () => {
                 onTransitionComplete={handleTransitionComplete}
             />
             
-            {/* Progress Sidebar - hidden during flying transition */}
+            {/* Journey Map Panel - expands diagonally from toggle button */}
             {gameState.phase !== 'character-creation' && !showVictoryScreen && !isFlying && (
-                <ProgressSidebar
-                    currentIndex={gameState.currentLocationIndex}
-                    isFlying={isFlying}
-                />
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: 40,
+                        left: 0,
+                        zIndex: 100
+                    }}
+                >
+                    {/* Small closed button */}
+                    <button
+                        type="button"
+                        onClick={() => setSidebarOpen(true)}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            padding: '16px 20px',
+                            backgroundColor: '#1D1436',
+                            borderTop: '1px solid #480990',
+                            borderRight: '1px solid #480990',
+                            borderBottom: '1px solid #480990',
+                            borderLeft: 'none',
+                            borderTopRightRadius: 8,
+                            borderBottomRightRadius: 8,
+                            borderTopLeftRadius: 0,
+                            borderBottomLeftRadius: 0,
+                            boxShadow: '0 0 20px 1px #5E0CA06B',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: sidebarOpen ? 0 : 0.8,
+                            transform: sidebarOpen ? 'scale(0.8)' : 'scale(1)',
+                            transformOrigin: 'top left',
+                            transition: 'opacity 0.25s ease, transform 0.25s ease',
+                            pointerEvents: sidebarOpen ? 'none' : 'auto'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+                    >
+                        <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="mapIconTitleClosed">
+                            <title id="mapIconTitleClosed">Open Journey Map</title>
+                            <path d="M7.875 15.75L1.75 19.25V5.25L7.875 1.75M7.875 15.75L14 19.25M7.875 15.75V1.75M14 19.25L19.25 15.75V1.75L14 5.25M14 19.25V5.25M14 5.25L7.875 1.75" stroke="#DADADA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </button>
+                    
+                    {/* Expanded panel - grows diagonally from top-left */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: 253,
+                            height: 330,
+                            backgroundColor: '#1D1436',
+                            border: '1px solid #480990',
+                            borderLeft: 'none',
+                            borderTopRightRadius: 8,
+                            borderBottomRightRadius: 8,
+                            boxShadow: '0 0 20px 1px #5E0CA06B',
+                            opacity: sidebarOpen ? 1 : 0,
+                            transform: sidebarOpen ? 'scale(1)' : 'scale(0.3)',
+                            transformOrigin: 'top left',
+                            transition: 'opacity 0.3s ease, transform 0.3s ease',
+                            pointerEvents: sidebarOpen ? 'auto' : 'none',
+                            overflow: 'hidden'
+                        }}
+                    >
+                        {/* Header */}
+                        <button
+                            type="button"
+                            onClick={() => setSidebarOpen(false)}
+                            style={{
+                                padding: '16px 20px 12px 20px',
+                                backgroundColor: 'transparent',
+                                border: '0px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 12,
+                                width: '100%',
+                            }}
+                        >
+                            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="mapIconTitleOpen">
+                                <title id="mapIconTitleOpen">Close Journey Map</title>
+                                <path d="M7.875 15.75L1.75 19.25V5.25L7.875 1.75M7.875 15.75L14 19.25M7.875 15.75V1.75M14 19.25L19.25 15.75V1.75L14 5.25M14 19.25V5.25M14 5.25L7.875 1.75" stroke="#DADADA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            <span style={{ color: '#DADADA', fontSize: 18, fontWeight: 600, fontFamily: "'Space Grotesk', sans-serif" }}>
+                                Journey Map
+                            </span>
+                        </button>
+                        
+                        {/* Content */}
+                        <ProgressSidebar
+                            currentIndex={gameState.currentLocationIndex}
+                            isFlying={isFlying}
+                        />
+                    </div>
+                </div>
             )}
             
             {/* Character Creation UI */}
