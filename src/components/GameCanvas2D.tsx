@@ -238,7 +238,7 @@ const GameCanvas2D = ({
             
             // Calculate base scale based on canvas size
             const baseScale = Math.min(width / 1920, height / 1080) * 0.8;
-            const gameScale = Math.max(2, Math.floor(baseScale * 4 * 0.7)); // 30% smaller character
+            const gameScale = baseScale * 4 * 0.6;
             
             // Character creation large scale
             const creationScale = Math.max(8, Math.floor(baseScale * 12));

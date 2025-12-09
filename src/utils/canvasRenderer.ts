@@ -703,7 +703,7 @@ export const drawAlienSaucer = (
 ): void => {
     ctx.save();
     
-    const pixelSize = 2; // Smaller pixel size
+    const pixelSize = 2.7; // 35% larger
     
     // Slight wobble animation
     const wobble = Math.sin(time * 3) * 1.5;
@@ -711,9 +711,9 @@ export const drawAlienSaucer = (
     const movementTilt = Math.max(-0.15, Math.min(0.15, velocityX * 0.003));
     const tilt = Math.sin(time * 2) * 0.02 + movementTilt;
     
-    ctx.translate(x + 30, y + 30);
+    ctx.translate(x + 40, y + 40);
     ctx.rotate(tilt);
-    ctx.translate(-30, -30);
+    ctx.translate(-40, -40);
     
     // Colors
     const purple = '#7D00FF';
@@ -842,8 +842,8 @@ export const drawAlienSaucer = (
     
     if (mouseX !== undefined && mouseY !== undefined) {
         // Calculate alien center in screen coordinates (saucer position + alien offset)
-        const alienCenterX = x + 30; // Center of the saucer
-        const alienCenterY = y + 20; // Approximate alien head center
+        const alienCenterX = x + 40; // Center of the saucer (scaled 35%)
+        const alienCenterY = y + 27; // Approximate alien head center (scaled 35%)
         const dx = mouseX - alienCenterX;
         const dy = mouseY - alienCenterY;
         const distance = Math.sqrt(dx * dx + dy * dy);
