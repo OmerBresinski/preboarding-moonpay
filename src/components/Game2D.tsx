@@ -427,6 +427,7 @@ const CharacterPreview = ({ preset }: { preset: CharacterPreset }) => {
 // Flying saucer overlay component with FYI chat bubble
 const SaucerOverlay = ({ visible, isFlying, fyis }: { visible: boolean; isFlying: boolean; fyis: string[] }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const bubbleRef = useRef<HTMLDivElement>(null);
     const animationRef = useRef<number>(0);
     const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     const animationStartRef = useRef<number>(0);
@@ -557,7 +558,7 @@ const SaucerOverlay = ({ visible, isFlying, fyis }: { visible: boolean; isFlying
             const { width, height } = canvas;
             ctx.clearRect(0, 0, width, height);
             
-            const targetX = width - 200; // Stop 200px from right
+            const targetX = width - 350; // Stop 250px from right (was 200px)
             const saucerY = height * 0.35 - 70; // 70px higher
             
             // Calculate opacity (fade out when flying/leaving)
@@ -600,6 +601,20 @@ const SaucerOverlay = ({ visible, isFlying, fyis }: { visible: boolean; isFlying
                 mouseRef.current.y, 
                 movementTilt * 1000
             );
+
+            // Update bubble position to follow alien
+            if (bubbleRef.current) {
+                // Alien center X (approximate based on sprite width)
+                // Sprite is ~30px wide * 2.7 scale ≈ 80px. Center is +40px.
+                const alienHeadX = positionRef.current + wobbleX + 40;
+                
+                // Alien top Y (dome top)
+                // Dome starts at y=5 * 2.7 ≈ 13.5px offset. 
+                const alienHeadY = saucerY + hoverOffset + 10;
+
+                bubbleRef.current.style.left = `${alienHeadX}px`;
+                bubbleRef.current.style.top = `${alienHeadY - 20}px`; // 20px over the head
+            }
             
             // Reset alpha
             ctx.globalAlpha = 1;
@@ -635,26 +650,30 @@ const SaucerOverlay = ({ visible, isFlying, fyis }: { visible: boolean; isFlying
                 }}
             />
             {/* Chat bubble - positioned to the left of the alien */}
-            <div style={{
-                position: 'absolute',
-                right: 270,
-                top: 'calc(35% - 80px)',
-                maxWidth: 300,
-                padding: '12px 16px',
-                background: 'rgba(125, 0, 255, 0.95)',
-                borderRadius: 12,
-                borderBottomRightRadius: 4,
-                color: 'white',
-                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                fontSize: 13,
-                lineHeight: 1.5,
-                pointerEvents: 'none',
-                zIndex: 1001,
-                opacity: bubbleVisible ? 1 : 0,
-                transform: `translateX(${bubbleVisible ? 0 : -20}px)`,
-                transition: 'opacity 0.3s ease, transform 0.3s ease',
-                boxShadow: '0 4px 20px rgba(125, 0, 255, 0.4)'
-            }}>
+            <div 
+                ref={bubbleRef}
+                style={{
+                    position: 'absolute',
+                    // right/top removed, controlled by JS
+                    maxWidth: 200,
+                    padding: '12px 16px',
+                    background: 'linear-gradient(180deg, rgba(60, 21, 112, 0.94) 0%, rgba(50, 18, 91, 0.94) 100%)',
+                    borderRadius: 8,
+                    borderBottomLeftRadius: 0,
+                    borderBottomRightRadius: 4,
+                    border: '1px solid #5813A8',
+                    color: 'white',
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                    pointerEvents: 'none',
+                    zIndex: 1001,
+                    opacity: bubbleVisible ? 1 : 0,
+                    transform: `translate(${bubbleVisible ? 0 : -20}px, -100%)`, // -100% Y to position bottom-left corner at target
+                    transition: 'opacity 0.3s ease, transform 0.3s ease',
+                    boxShadow: '0 0 12px 2px rgba(104, 40, 167, 0.42)' // #6828A76B
+                }}
+            >
                 {showEllipsis ? '.'.repeat(ellipsisCount) : fyis[currentFyiIndex]}
             </div>
         </>
