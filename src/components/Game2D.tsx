@@ -175,7 +175,7 @@ const Game2D = () => {
                         left: 0,
                         zIndex: 100,
                         width: sidebarOpen ? 253 : 61,
-                        height: sidebarOpen ? 330 : 58,
+                        height: sidebarOpen ? 338 : 58,
                         backgroundColor: '#1D1436',
                         borderTop: '1px solid #480990',
                         borderRight: '1px solid #480990',
