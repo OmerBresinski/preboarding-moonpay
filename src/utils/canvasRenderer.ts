@@ -263,11 +263,11 @@ export const drawOfficeLabel = (
 ): void => {
     ctx.save();
     
-    // Country/region name only
+    // City name only
     ctx.font = 'bold 14px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.fillText(moonbase.country, x, y);
+    ctx.fillText(moonbase.name, x, y);
     
     // Fun fact tooltip on hover (positioned above the map if tooltipY is provided)
     if (isHovered) {

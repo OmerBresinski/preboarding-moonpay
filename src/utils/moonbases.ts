@@ -35,7 +35,7 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         id: 'london',
         name: 'London',
         country: 'United Kingdom',
-        officeName: 'MoonPay HQ',
+        officeName: 'London',
         funFact: 'Our London office is where it all started! Founded in 2019, MoonPay now serves over 15 million customers worldwide.',
         canvasPosition: { x: 0.12, y: 0.72 }, // Bottom-left
         mapScale: 0.18,
@@ -47,7 +47,7 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         id: 'amsterdam',
         name: 'Amsterdam',
         country: 'Netherlands',
-        officeName: 'MoonPay Amsterdam',
+        officeName: 'Amsterdam',
         funFact: 'The Netherlands is a hub for European fintech! Our Amsterdam team brings Dutch innovation to crypto accessibility.',
         canvasPosition: { x: 0.22, y: 0.18 }, // Top-left
         mapScale: 0.18,
@@ -59,7 +59,7 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         id: 'barcelona',
         name: 'Barcelona',
         country: 'Spain',
-        officeName: 'MoonPay Barcelona',
+        officeName: 'Barcelona',
         funFact: 'Barcelona combines Mediterranean culture with tech innovation. Our team here loves the beach and blockchain equally!',
         canvasPosition: { x: 0.42, y: 0.58 }, // Middle-center
         mapScale: 0.18,
@@ -71,7 +71,7 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         id: 'dublin',
         name: 'Dublin',
         country: 'Ireland',
-        officeName: 'MoonPay Dublin',
+        officeName: 'Dublin',
         funFact: 'Ireland\'s tech scene is legendary! Dublin is home to many of the world\'s leading tech companies, and now MoonPay too.',
         canvasPosition: { x: 0.62, y: 0.22 }, // Top-right
         mapScale: 0.18,
@@ -83,7 +83,7 @@ export const MOONBASE_DATA: Record<MoonBaseLocation, MoonBaseInfo> = {
         id: 'new-york',
         name: 'New York',
         country: 'United States',
-        officeName: 'MoonPay NYC',
+        officeName: 'New York',
         funFact: 'The city that never sleeps! Our New York office operates in the heart of the global financial capital.',
         canvasPosition: { x: 0.78, y: 0.62 }, // Bottom-right
         mapScale: 0.18,

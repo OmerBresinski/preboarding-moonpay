@@ -198,7 +198,9 @@ const GameCanvas2D = ({
                     // Don't zoom in on moon - it's already huge
                     targetZoom = isAtMoon ? ZOOM_OUT : ZOOM_IN;
                     targetX = currentLoc.x;
-                    targetY = currentLoc.y;
+                    // Offset camera Y to position map 300px from top of screen
+                    const screenOffsetY = (height / 2 - 300) / ZOOM_IN;
+                    targetY = currentLoc.y + screenOffsetY;
                 }
             }
             
@@ -308,8 +310,8 @@ const GameCanvas2D = ({
                     const newIntensity = currentIntensity + (targetIntensity - currentIntensity) * 0.15;
                     intensityRef.current[loc.id] = newIntensity;
                     
-                    // Use the moonbase's own scale multiplied by base scale
-                    const mapScale = baseScale * loc.moonbase.mapScale;
+                    // Use the moonbase's own scale multiplied by base scale (1.35x larger)
+                    const mapScale = baseScale * loc.moonbase.mapScale * 1.35;
                     
                     // Calculate map dimensions - using larger base for image maps
                     const mapWidth = 800 * mapScale;
