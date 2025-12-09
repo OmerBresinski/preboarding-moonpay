@@ -348,88 +348,151 @@ export const drawTooltip = (
     ctx.restore();
 };
 
-// Helper to calculate point along a line segment, stopping at a gap
-const getPointWithGap = (
-    fromX: number, fromY: number,
-    toX: number, toY: number,
-    gapRadius: number,
-    isStart: boolean // true = start from gap, false = stop at gap
-): { x: number; y: number } => {
-    const dx = toX - fromX;
-    const dy = toY - fromY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist === 0) return { x: fromX, y: fromY };
-    
-    const ratio = gapRadius / dist;
-    if (isStart) {
-        // Start point: move away from 'from' towards 'to'
-        return { x: fromX + dx * ratio, y: fromY + dy * ratio };
-    } else {
-        // End point: stop before reaching 'to'
-        return { x: toX - dx * ratio, y: toY - dy * ratio };
-    }
-};
-
-// Draw progress path connecting locations (with gaps around each point)
+// Draw fluid curved progress path connecting locations
 export const drawProgressPath = (
     ctx: CanvasRenderingContext2D,
     points: { x: number; y: number }[],
     currentIndex: number,
-    animationProgress: number = 1,
-    gapRadius: number = 80 // Gap radius around each map
+    animationProgress: number = 0,
+    gapRadius: number = 80
 ): void => {
     if (points.length < 2) return;
     
     ctx.save();
     
-    // Draw each segment separately to create gaps around maps
-    const drawSegment = (
-        fromIdx: number, 
-        toIdx: number, 
-        style: string, 
-        lineWidth: number, 
-        dashed: boolean,
-        partialProgress?: number // 0-1 for partial segment
-    ) => {
-        const from = points[fromIdx];
-        const to = points[toIdx];
+    const UNFILLED_COLOR = 'rgba(145, 132, 178, 0.2)'; // #9184B2 at 20% opacity
+    const FILLED_COLOR = '#9184B2';
+    
+    // Helper to calculate bezier control points for a segment
+    const getSegmentCurve = (segmentIndex: number) => {
+        const tension = 0.4;
+        const p0 = points[Math.max(0, segmentIndex - 1)];
+        const p1 = points[segmentIndex];
+        const p2 = points[segmentIndex + 1];
+        const p3 = points[Math.min(points.length - 1, segmentIndex + 2)];
         
-        // Calculate start and end points with gaps
-        const startPt = getPointWithGap(from.x, from.y, to.x, to.y, gapRadius, true);
-        let endPt = getPointWithGap(from.x, from.y, to.x, to.y, gapRadius, false);
+        const d01 = Math.sqrt(Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2));
+        const d12 = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        const d23 = Math.sqrt(Math.pow(p3.x - p2.x, 2) + Math.pow(p3.y - p2.y, 2));
         
-        // If partial progress, interpolate the end point
-        if (partialProgress !== undefined && partialProgress < 1) {
-            const fullEndX = endPt.x;
-            const fullEndY = endPt.y;
-            const progressX = startPt.x + (fullEndX - startPt.x) * partialProgress;
-            const progressY = startPt.y + (fullEndY - startPt.y) * partialProgress;
-            endPt = { x: progressX, y: progressY };
+        let cp1x: number, cp1y: number;
+        if (segmentIndex === 0) {
+            cp1x = p1.x + (p2.x - p1.x) * 0.3;
+            cp1y = p1.y + (p2.y - p1.y) * 0.3;
+        } else {
+            const fa = tension * d01 / (d01 + d12);
+            const fb = tension - fa;
+            cp1x = p1.x + fb * (p2.x - p0.x);
+            cp1y = p1.y + fb * (p2.y - p0.y);
         }
         
+        let cp2x: number, cp2y: number;
+        if (segmentIndex === points.length - 2) {
+            cp2x = p2.x - (p2.x - p1.x) * 0.3;
+            cp2y = p2.y - (p2.y - p1.y) * 0.3;
+        } else {
+            const fa2 = tension * d12 / (d12 + d23);
+            cp2x = p2.x - fa2 * (p3.x - p1.x);
+            cp2y = p2.y - fa2 * (p3.y - p1.y);
+        }
+        
+        // Bezier point evaluation
+        const bezierPoint = (t: number) => {
+            const mt = 1 - t;
+            const mt2 = mt * mt;
+            const mt3 = mt2 * mt;
+            const t2 = t * t;
+            const t3 = t2 * t;
+            return {
+                x: mt3 * p1.x + 3 * mt2 * t * cp1x + 3 * mt * t2 * cp2x + t3 * p2.x,
+                y: mt3 * p1.y + 3 * mt2 * t * cp1y + 3 * mt * t2 * cp2y + t3 * p2.y
+            };
+        };
+        
+        // Find gap t values
+        let tStart = 0;
+        for (let t = 0; t <= 1; t += 0.01) {
+            const pt = bezierPoint(t);
+            if (Math.sqrt(Math.pow(pt.x - p1.x, 2) + Math.pow(pt.y - p1.y, 2)) >= gapRadius) {
+                tStart = t;
+                break;
+            }
+        }
+        
+        let tEnd = 1;
+        for (let t = 1; t >= 0; t -= 0.01) {
+            const pt = bezierPoint(t);
+            if (Math.sqrt(Math.pow(pt.x - p2.x, 2) + Math.pow(pt.y - p2.y, 2)) >= gapRadius) {
+                tEnd = t;
+                break;
+            }
+        }
+        
+        return { p1, p2, cp1x, cp1y, cp2x, cp2y, bezierPoint, tStart, tEnd };
+    };
+    
+    // Draw a segment curve
+    const drawSegmentCurve = (segmentIndex: number, startT: number, endT: number, dashed: boolean) => {
+        const curve = getSegmentCurve(segmentIndex);
+        const actualStartT = Math.max(startT, curve.tStart);
+        const actualEndT = Math.min(endT, curve.tEnd);
+        
+        if (actualStartT >= actualEndT) return;
+        
         ctx.beginPath();
+        const startPt = curve.bezierPoint(actualStartT);
         ctx.moveTo(startPt.x, startPt.y);
-        ctx.lineTo(endPt.x, endPt.y);
-        ctx.strokeStyle = style;
-        ctx.lineWidth = lineWidth;
-        ctx.setLineDash(dashed ? [8, 8] : []);
+        
+        const steps = 30;
+        for (let step = 1; step <= steps; step++) {
+            const t = actualStartT + (actualEndT - actualStartT) * (step / steps);
+            const pt = curve.bezierPoint(t);
+            ctx.lineTo(pt.x, pt.y);
+        }
+        
+        ctx.setLineDash(dashed ? [8, 6] : []);
         ctx.stroke();
     };
     
-    // Draw completed segments (solid purple)
+    // 1. Draw ALL segments as unfilled (solid) - background path
+    ctx.strokeStyle = UNFILLED_COLOR;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    for (let i = 0; i < points.length - 1; i++) {
+        drawSegmentCurve(i, 0, 1, false);
+    }
+    
+    // 2. Draw completed segments (filled, solid)
+    ctx.strokeStyle = FILLED_COLOR;
+    ctx.lineWidth = 2.5;
+    
     for (let i = 0; i < currentIndex && i < points.length - 1; i++) {
-        drawSegment(i, i + 1, COLORS.mpPurple, 3, false);
+        drawSegmentCurve(i, 0, 1, false);
     }
     
-    // Draw current transition animation
-    if (currentIndex < points.length - 1 && animationProgress > 0 && animationProgress < 1) {
-        drawSegment(currentIndex, currentIndex + 1, COLORS.mpPurpleGlow, 3, false, animationProgress);
-    }
-    
-    // Draw remaining segments (dashed, faded)
-    const startIdx = animationProgress >= 1 ? currentIndex : currentIndex + 1;
-    for (let i = startIdx; i < points.length - 1; i++) {
-        drawSegment(i, i + 1, 'rgba(125, 0, 255, 0.3)', 2, true);
+    // 3. Draw current segment progress (if animating)
+    if (animationProgress > 0 && currentIndex < points.length - 1) {
+        const curve = getSegmentCurve(currentIndex);
+        const visibleRange = curve.tEnd - curve.tStart;
+        const progressT = curve.tStart + visibleRange * Math.min(1, animationProgress);
+        
+        if (progressT > curve.tStart) {
+            ctx.beginPath();
+            const startPt = curve.bezierPoint(curve.tStart);
+            ctx.moveTo(startPt.x, startPt.y);
+            
+            const steps = 30;
+            for (let step = 1; step <= steps; step++) {
+                const t = curve.tStart + (progressT - curve.tStart) * (step / steps);
+                const pt = curve.bezierPoint(t);
+                ctx.lineTo(pt.x, pt.y);
+            }
+            
+            ctx.setLineDash([]);
+            ctx.stroke();
+        }
     }
     
     ctx.restore();

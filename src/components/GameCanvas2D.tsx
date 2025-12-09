@@ -68,13 +68,11 @@ const GameCanvas2D = ({
     // Mouse position in world coordinates (for character interaction)
     const mousePositionRef = useRef<{ worldX: number; worldY: number; screenX: number; screenY: number } | null>(null);
     
-    // Moon reveal animation - slides in from right after completing NYC (index 4)
-    const moonRevealRef = useRef<{ revealed: boolean; animatedX: number }>({
-        revealed: false,
-        animatedX: 1.15 // Start off-screen
+    // Moon is always visible now (no animation needed)
+    const moonRevealRef = useRef<{ revealed: boolean }>({
+        revealed: true
     });
-    const MOON_TARGET_X = 0.92; // Target position when revealed
-    const NYC_INDEX = 4; // NYC is at index 4, moon reveals after completing it
+    const NYC_INDEX = 4; // NYC is at index 4
     
     // Maps fade out - triggered when NYC is completed, never returns
     const mapsFadeRef = useRef<{ startTime: number; fadingOut: boolean; fullyHidden: boolean }>({
@@ -88,13 +86,9 @@ const GameCanvas2D = ({
     const getLocationCanvasPositions = useCallback((width: number, height: number) => {
         return MOONBASE_ORDER.map((loc) => {
             const moonbase = MOONBASE_DATA[loc];
-            // For the moon (last location), use animated X position
-            const xPosition = loc === 'moon' 
-                ? moonRevealRef.current.animatedX 
-                : moonbase.canvasPosition.x;
             return {
                 id: loc,
-                x: xPosition * width,
+                x: moonbase.canvasPosition.x * width,
                 y: moonbase.canvasPosition.y * height,
                 moonbase
             };
@@ -214,20 +208,14 @@ const GameCanvas2D = ({
             camera.currentX += (targetX - camera.currentX) * lerpSpeed;
             camera.currentY += (targetY - camera.currentY) * lerpSpeed;
             
-            // === MOON REVEAL & MAPS FADE OUT ===
-            // Reveal the moon when flying TO it (previousLocationIndex is NYC and flying) or when landed
-            const moonReveal = moonRevealRef.current;
+            // === MAPS FADE OUT (during victory) ===
             const mapsFade = mapsFadeRef.current;
             const isFlyingToMoon = isFlying && previousLocationIndex === NYC_INDEX;
             
-            // Trigger moon reveal and maps fade when NYC is completed
-            if ((gameState.currentLocationIndex > NYC_INDEX || isFlyingToMoon) && !moonReveal.revealed) {
-                moonReveal.revealed = true;
-                // Start the maps fade out
-                if (!mapsFade.fadingOut && !mapsFade.fullyHidden) {
-                    mapsFade.fadingOut = true;
-                    mapsFade.startTime = time;
-                }
+            // Trigger maps fade when flying to moon or at moon
+            if ((gameState.currentLocationIndex > NYC_INDEX || isFlyingToMoon) && !mapsFade.fadingOut && !mapsFade.fullyHidden) {
+                mapsFade.fadingOut = true;
+                mapsFade.startTime = time;
             }
             
             // Calculate maps fade progress (0 = fully visible, 1 = fully hidden)
@@ -240,11 +228,6 @@ const GameCanvas2D = ({
                 if (mapsFadeProgress >= 1) {
                     mapsFade.fullyHidden = true;
                 }
-            }
-            
-            // Animate moon sliding in from the right
-            if (moonReveal.revealed) {
-                moonReveal.animatedX += (MOON_TARGET_X - moonReveal.animatedX) * 0.05; // Slower slide-in
             }
 
             // Clear canvas
@@ -291,24 +274,22 @@ const GameCanvas2D = ({
                 
                 // Draw progress path connecting all locations (horizontal line)
                 // Hide/fade path when maps are fading/hidden
-                if (mapsVisibility > 0) {
+                // Only show progress path when flying (hidden when landed/question appears)
+                if (isFlying && mapsVisibility > 0) {
                     ctx.globalAlpha = mapsVisibility;
                     const pathPoints = locations
                         .filter(loc => loc.id !== 'moon' || moonRevealRef.current.revealed)
                         .map(loc => ({ x: loc.x, y: loc.y }));
-                    drawProgressPath(ctx, pathPoints, progressIndex, isFlying ? transitionProgressRef.current : 0);
+                    // Pass gap radius based on map size
+                    const gapRadius = 100 * baseScale;
+                    drawProgressPath(ctx, pathPoints, progressIndex, transitionProgressRef.current, gapRadius);
                     ctx.globalAlpha = 1;
                 }
                 
                 // Draw all locations
                 
                 locations.forEach((loc, index) => {
-                    // Skip moon until it's revealed (after completing NYC)
-                    if (loc.id === 'moon' && !moonRevealRef.current.revealed) {
-                        return;
-                    }
-                    
-                    // Hide non-moon maps when fully faded
+                    // Hide non-moon maps when fully faded (during victory)
                     if (loc.id !== 'moon' && mapsVisibility <= 0) {
                         return; // Fully faded, skip
                     }
