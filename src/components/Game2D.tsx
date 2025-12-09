@@ -163,8 +163,8 @@ const Game2D = () => {
                 onTransitionComplete={handleTransitionComplete}
             />
             
-            {/* Progress Sidebar */}
-            {gameState.phase !== 'character-creation' && !showVictoryScreen && (
+            {/* Progress Sidebar - hidden during flying transition */}
+            {gameState.phase !== 'character-creation' && !showVictoryScreen && !isFlying && (
                 <ProgressSidebar
                     currentIndex={gameState.currentLocationIndex}
                     isFlying={isFlying}
