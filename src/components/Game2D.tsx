@@ -70,7 +70,8 @@ const Game2D = () => {
     const [isFlying, setIsFlying] = useState(false);
     const [previousLocationIndex, setPreviousLocationIndex] = useState(0);
     const [selectedPreset, setSelectedPreset] = useState<CharacterPreset>(CHARACTER_PRESETS[0]);
-    const [showVictoryScreen, setShowVictoryScreen] = useState<1 | 2 | null>(null);
+    const [showVictoryScreen, setShowVictoryScreen] = useState<boolean>(false);
+    const [activePerkIndex, setActivePerkIndex] = useState(0);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     // Animation progress ref
     const transitionProgressRef = useRef<number>(0);
@@ -94,7 +95,7 @@ const Game2D = () => {
         
         // Check if we reached the final destination (NYC)
         if (gameState.phase === 'victory') {
-            setShowVictoryScreen(1);
+            setShowVictoryScreen(true);
         }
     }, [gameState.phase]);
     
@@ -142,12 +143,17 @@ const Game2D = () => {
         }));
     }, []);
     
-    // Victory screen navigation
-    const handleVictoryNext = useCallback(() => {
-        if (showVictoryScreen === 1) {
-            setShowVictoryScreen(2);
-        }
-    }, [showVictoryScreen]);
+    // Carousel navigation
+    const nextPerk = () => {
+        setActivePerkIndex((prev) => (prev + 1) % PERKS.length);
+    };
+
+    const prevPerk = () => {
+        setActivePerkIndex((prev) => (prev - 1 + PERKS.length) % PERKS.length);
+    };
+
+    // Handle Victory Next - removed as we only have one screen now
+    // const handleVictoryNext = useCallback(() => { ... });
 
     // Get current location for display
     const currentLocation = MOONBASE_ORDER[gameState.currentLocationIndex];
@@ -314,68 +320,88 @@ const Game2D = () => {
                 />
             )}
             
-            {/* Victory Screen 1: $20 Unlock */}
-            {showVictoryScreen === 1 && (
+            {/* Victory Screen: Welcome Aboard */}
+            {showVictoryScreen && (
                 <div style={styles.victoryOverlay}>
-                    <div style={styles.unlockCard}>
-                        <div style={styles.moonpayLogo}>
-                            <svg width="80" height="80" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="moonpay-logo-title">
-                                <title id="moonpay-logo-title">MoonPay Logo</title>
-                                <path fill="#7D00FF" d="M14.555 6.928a2.464 2.464 0 1 0 0-4.928 2.464 2.464 0 0 0 0 4.928M6.998 18.025a6.004 6.004 0 1 1 .01-12.008 6.004 6.004 0 0 1-.01 12.008"/>
-                            </svg>
+                    <h1 style={styles.victoryTitle}>
+                        Welcome Aboard, <span style={{ textTransform: 'capitalize' }}>{playerName}</span> 🚀
+                    </h1>
+                    <p style={styles.victorySubtitle}>Here's what awaits you at MoonPay</p>
+
+                    {/* Benefits Carousel */}
+                    <div style={styles.carouselContainer}>
+                        {/* Navigation Buttons */}
+                        <div style={{ ...styles.carouselNavButton, left: 0 }} onClick={prevPerk}>
+                            ←
                         </div>
-                        <h1 style={styles.unlockTitle}>You've unlocked $20 on MoonPay!</h1>
-                        <p style={styles.unlockDisclaimer}>
-                            The first $20 are on us — expense it on your first day and share your feedback!
-                        </p>
-                        <button 
-                            type="button" 
-                            style={styles.unlockButton}
-                            onClick={handleVictoryNext}
-                        >
-                            Wanna see what you get on your first day? →
-                        </button>
-                    </div>
-                </div>
-            )}
-            
-            {/* Victory Screen 2: Perks Page */}
-            {showVictoryScreen === 2 && (
-                <div style={styles.victoryOverlay}>
-                    <div style={styles.perksContent}>
-                        <h1 style={styles.perksTitle}>Welcome Aboard, {playerName}! 🚀</h1>
-                        <p style={styles.perksSubtitle}>Here's what awaits you at MoonPay</p>
-                        
-                        <div style={styles.perksGrid}>
-                            {PERKS.map((perk) => (
-                                <div key={perk.id} style={styles.perkCard}>
+                        <div style={{ ...styles.carouselNavButton, right: 0 }} onClick={nextPerk}>
+                            →
+                        </div>
+
+                        {/* Cards */}
+                        {PERKS.map((perk, index) => {
+                            // Calculate relative position
+                            const total = PERKS.length;
+                            // Calculate circular distance
+                            let offset = index - activePerkIndex;
+                            if (offset > total / 2) offset -= total;
+                            if (offset < -total / 2) offset += total;
+                            
+                            // Only show neighbors (range -2 to 2)
+                            if (Math.abs(offset) > 2) return null;
+                            
+                            // Calculate styles based on offset
+                            const isActive = offset === 0;
+                            const xTrans = offset * 140; // 140px separation
+                            const zTrans = Math.abs(offset) * -50; // Push back
+                            // Rotate logic: negative offset (left) -> rotate positive (towards center) ? 
+                            // Standard fan: left items rotate left (negative), right items rotate right (positive)
+                            // Screenshot shows left item rotated clockwise (positive?) No, left item top is tilted left.
+                            // Let's try: left item (negative offset) -> rotate -10deg.
+                            const rotate = offset * 5; 
+                            const scale = isActive ? 1.1 : 1 - Math.abs(offset) * 0.15;
+                            const opacity = isActive ? 1 : 1 - Math.abs(offset) * 0.4;
+                            const zIndex = 10 - Math.abs(offset);
+
+                            return (
+                                <div 
+                                    key={perk.id}
+                                    style={{
+                                        ...styles.carouselCardBase,
+                                        transform: `translateX(${xTrans}px) translateZ(${zTrans}px) rotateZ(${rotate}deg) scale(${scale})`,
+                                        opacity,
+                                        zIndex
+                                    }}
+                                >
                                     <span style={styles.perkIcon}>{perk.icon}</span>
                                     <h3 style={styles.perkTitle}>{perk.title}</h3>
                                     <p style={styles.perkDescription}>{perk.description}</p>
                                 </div>
-                            ))}
+                            );
+                        })}
+                    </div>
+
+                    <button 
+                        type="button" 
+                        style={styles.playAgainButton}
+                        onClick={() => window.location.reload()}
+                    >
+                        Play Again
+                    </button>
+
+                    {/* Mission Footer */}
+                    <div style={styles.missionBox}>
+                        <h3 style={styles.missionTitle}>Our Mission & Vision</h3>
+                        <p style={styles.missionText}>
+                            Making cryptocurrency accessible to everyone, everywhere. 
+                            We're building the bridge between traditional finance and the crypto ecosystem.
+                        </p>
+                        <div style={styles.missionLinks}>
+                            <a href="https://www.moonpay.com/about" target="_blank" rel="noopener noreferrer" style={styles.missionLink}>Learn More About Us →</a>
+                            <a href="https://www.moonpay.com/about" target="_blank" rel="noopener noreferrer" style={styles.missionLink}>Learn More About Us →</a>
+                            <a href="https://www.moonpay.com/about" target="_blank" rel="noopener noreferrer" style={styles.missionLink}>Learn More About Us →</a>
+                            <a href="https://www.moonpay.com/about" target="_blank" rel="noopener noreferrer" style={styles.missionLink}>Learn More About Us →</a>
                         </div>
-                        
-                        <div style={styles.missionSection}>
-                            <h2 style={styles.missionTitle}>Our Mission & Vision</h2>
-                            <p style={styles.missionText}>
-                                Making cryptocurrency accessible to everyone, everywhere. 
-                                We're building the bridge between traditional finance and the crypto ecosystem.
-                            </p>
-                            <div style={styles.missionLinks}>
-                                <a href="https://www.moonpay.com/about" target="_blank" rel="noopener noreferrer" style={styles.missionLink}>
-                                    Learn More About Us →
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <button 
-                            type="button" 
-                            style={styles.restartButton}
-                            onClick={() => window.location.reload()}
-                        >
-                            🔄 Play Again
-                        </button>
                     </div>
                 </div>
             )}
@@ -839,147 +865,154 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(8, 5, 16, 0.95)',
-        fontFamily: FONT_FAMILY,
+        // justifyContent: 'center', // Removed to allow top positioning
+        paddingTop: 62, // Position content from top
+        backgroundColor: '#080510',
         zIndex: 100,
-        overflowY: 'auto',
-        padding: 40
+        overflow: 'hidden'
     },
-    unlockCard: {
-        background: 'linear-gradient(135deg, rgba(125, 0, 255, 0.2) 0%, rgba(90, 0, 153, 0.2) 100%)',
-        border: '2px solid rgba(125, 0, 255, 0.4)',
-        borderRadius: 24,
-        padding: 48,
-        maxWidth: 500,
-        textAlign: 'center',
-        boxShadow: '0 0 60px rgba(125, 0, 255, 0.3)'
-    },
-    moonpayLogo: {
-        marginBottom: 24,
-        display: 'flex',
-        justifyContent: 'center'
-    },
-    unlockTitle: {
+    victoryTitle: {
         color: '#FFF',
-        fontSize: 32,
+        fontSize: 55,
         fontWeight: 700,
-        marginBottom: 16,
-        fontFamily: FONT_FAMILY
+        marginBottom: 11,
+        marginTop: 0,
+        fontFamily: "'Roboto Slab', serif",
+        textAlign: 'center'
     },
-    unlockDisclaimer: {
-        color: 'rgba(255, 255, 255, 0.7)',
-        fontSize: 14,
-        lineHeight: 1.6,
-        marginBottom: 32,
-        fontFamily: FONT_FAMILY
+    victorySubtitle: {
+        color: '#B3B3B3',
+        fontSize: 22,
+        fontWeight: 400,
+        marginBottom: 60,
+        marginTop: 0,
+        fontFamily: "'Roboto', sans-serif",
+        textAlign: 'center'
     },
-    unlockButton: {
-        padding: '16px 32px',
+    carouselContainer: {
+        position: 'relative',
+        width: 1000,
+        height: 380,
+        marginBottom: 40,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        perspective: '1000px'
+    },
+    carouselCardBase: {
+        position: 'absolute',
+        width: 237,
+        height: 287,
+        background: '#21073C',
+        // Gradient border trick with border-radius
+        backgroundImage: 'linear-gradient(#21073C, #21073C), linear-gradient(210.41deg, #3E006A 3.36%, #7B16C5 55.34%, #3E006A 98.21%)',
+        backgroundOrigin: 'border-box',
+        backgroundClip: 'padding-box, border-box',
+        border: '1px solid transparent',
+        borderRadius: 10,
+        padding: '40px 24px', // 40px top padding
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        transition: 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+        transformOrigin: 'bottom center',
+        boxSizing: 'border-box'
+    },
+    carouselNavButton: {
+        position: 'absolute',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: 48,
+        height: 48,
+        borderRadius: '50%',
+        background: 'linear-gradient(135deg, #3E006A 0%, #5813A8 100%)',
+        border: '1px solid rgba(125, 0, 255, 0.5)',
+        color: '#FFF',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        zIndex: 20,
+        transition: 'all 0.2s',
+        fontSize: 20,
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+    },
+    playAgainButton: {
+        padding: '16px 48px',
         fontSize: 16,
         fontWeight: 600,
         color: '#FFF',
-        background: 'linear-gradient(135deg, #7D00FF 0%, #5a0099 100%)',
-        border: 'none',
+        background: 'linear-gradient(90deg, #2D0B5A 0%, #4B1296 100%)',
+        border: '1px solid rgba(125, 0, 255, 0.5)',
         borderRadius: 30,
         cursor: 'pointer',
         fontFamily: FONT_FAMILY,
-        transition: 'transform 0.2s ease'
+        marginBottom: 100,
+        boxShadow: '0 0 30px rgba(125, 0, 255, 0.2)',
+        transition: 'all 0.2s'
     },
-    perksContent: {
-        maxWidth: 900,
+    missionBox: {
         width: '100%',
-        textAlign: 'center'
-    },
-    perksTitle: {
-        color: '#FFD700',
-        fontSize: 36,
-        fontWeight: 700,
-        marginBottom: 8,
-        fontFamily: FONT_FAMILY
-    },
-    perksSubtitle: {
-        color: 'rgba(255, 255, 255, 0.7)',
-        fontSize: 16,
-        marginBottom: 32,
-        fontFamily: FONT_FAMILY
-    },
-    perksGrid: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 16,
-        marginBottom: 32
-    },
-    perkCard: {
-        background: 'rgba(125, 0, 255, 0.1)',
-        border: '1px solid rgba(125, 0, 255, 0.3)',
-        borderRadius: 16,
-        padding: 20,
-        textAlign: 'center'
-    },
-    perkIcon: {
-        fontSize: 32,
-        display: 'block',
-        marginBottom: 12
-    },
-    perkTitle: {
-        color: '#FFF',
-        fontSize: 14,
-        fontWeight: 600,
-        marginBottom: 8,
-        fontFamily: FONT_FAMILY
-    },
-    perkDescription: {
-        color: 'rgba(255, 255, 255, 0.6)',
-        fontSize: 12,
-        lineHeight: 1.5,
-        margin: 0,
-        fontFamily: FONT_FAMILY
-    },
-    missionSection: {
-        background: 'rgba(125, 0, 255, 0.15)',
-        border: '1px solid rgba(125, 0, 255, 0.4)',
-        borderRadius: 16,
-        padding: 32,
-        marginBottom: 32
+        maxWidth: 800,
+        background: 'linear-gradient(180deg, rgba(20, 10, 40, 0.95) 0%, rgba(10, 5, 20, 0.95) 100%)',
+        border: '1px solid rgba(125, 0, 255, 0.2)',
+        borderRadius: 12,
+        padding: '24px 40px',
+        textAlign: 'center',
+        position: 'absolute',
+        bottom: 40
     },
     missionTitle: {
         color: '#FFF',
-        fontSize: 20,
+        fontSize: 16,
         fontWeight: 700,
         marginBottom: 12,
         fontFamily: FONT_FAMILY
     },
     missionText: {
-        color: 'rgba(255, 255, 255, 0.8)',
-        fontSize: 14,
-        lineHeight: 1.7,
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: 13,
+        lineHeight: 1.6,
         marginBottom: 16,
-        fontFamily: FONT_FAMILY
+        fontFamily: FONT_FAMILY,
+        maxWidth: 600,
+        margin: '0 auto 16px auto'
     },
     missionLinks: {
         display: 'flex',
         justifyContent: 'center',
-        gap: 24
+        gap: 24,
+        flexWrap: 'wrap'
     },
     missionLink: {
-        color: '#B366FF',
-        fontSize: 14,
-        fontWeight: 600,
+        color: 'rgba(255, 255, 255, 0.5)',
+        fontSize: 12,
         textDecoration: 'none',
-        fontFamily: FONT_FAMILY
-    },
-    restartButton: {
-        padding: '14px 28px',
-        fontSize: 16,
-        fontWeight: 600,
-        color: '#FFF',
-        background: 'linear-gradient(135deg, #7D00FF 0%, #5a0099 100%)',
-        border: 'none',
-        borderRadius: 30,
-        cursor: 'pointer',
         fontFamily: FONT_FAMILY,
-        boxShadow: '0 4px 20px rgba(125, 0, 255, 0.5)'
+        transition: 'color 0.2s'
+    },
+    perkIcon: {
+        fontSize: 25, // Fallback if emoji
+        width: 25,    // For image/svg icons
+        marginBottom: 18,
+        display: 'block'
+    },
+    perkTitle: {
+        color: '#EAD9FC',
+        fontSize: 20,
+        fontWeight: 700,
+        marginBottom: 40,
+        fontFamily: "'Roboto', sans-serif"
+    },
+    perkDescription: {
+        color: '#CEB5E7',
+        fontSize: 14,
+        fontWeight: 400,
+        lineHeight: 1.5,
+        margin: 0,
+        fontFamily: "'Roboto', sans-serif"
     }
 };
 
